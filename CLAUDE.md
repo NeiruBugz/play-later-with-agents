@@ -34,6 +34,13 @@ cd api/
 poetry install                  # Install Python dependencies
 poetry run uvicorn main:app --reload  # Start development server
 poetry run ruff format          # Format Python code
+poetry run pytest               # Run tests
+
+# Database migrations (requires PostgreSQL running)
+source .venv/bin/activate && PYTHONPATH=. python -m alembic upgrade head  # Run migrations
+source .venv/bin/activate && PYTHONPATH=. python -m alembic current       # Check current version
+source .venv/bin/activate && PYTHONPATH=. python -m alembic history       # View migration history
+source .venv/bin/activate && PYTHONPATH=. python -m alembic revision --autogenerate -m "description"  # Generate new migration
 ```
 
 ### Infrastructure
@@ -64,9 +71,31 @@ Conventional commits are enforced using commitlint. Follow the format: `type(sco
 - **Framework**: FastAPI with Python 3.9+
 - **Package Manager**: Poetry
 - **Code Formatting**: Ruff
+- **Database**: PostgreSQL with SQLAlchemy ORM and Alembic migrations
+- **Testing**: pytest with TestClient for API endpoints
 
 ### Shadcn UI Components
 Add new components using: `pnpx shadcn@latest add [component-name]`
+
+## Database Setup
+
+The API uses PostgreSQL. Ensure you have PostgreSQL running locally:
+- Database: `play-later-db`
+- Connection: `postgresql://postgres:postgres@0.0.0.0:6432/play-later-db`
+- Configuration: Set `DATABASE_URL` in `api/.env` file
+
+### Database Commands
+```bash
+cd api/
+# Create .env file with DATABASE_URL
+echo "DATABASE_URL=postgresql://postgres:postgres@0.0.0.0:6432/play-later-db" > .env
+
+# Run migrations to create/update tables
+source .venv/bin/activate && PYTHONPATH=. python -m alembic upgrade head
+
+# Run tests (uses same database)
+source .venv/bin/activate && pytest
+```
 
 ## API Client Generation
 

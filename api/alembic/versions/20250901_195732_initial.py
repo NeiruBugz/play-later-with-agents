@@ -22,8 +22,18 @@ def upgrade() -> None:
         sa.Column("igdb_id", sa.Integer(), nullable=True),
         sa.Column("hltb_id", sa.Integer(), nullable=True),
         sa.Column("steam_app_id", sa.Integer(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
     )
     op.create_index("ix_games_title", "games", ["title"])
 
@@ -32,16 +42,35 @@ def upgrade() -> None:
         "collection_items",
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("user_id", sa.String(), nullable=False),
-        sa.Column("game_id", sa.String(), sa.ForeignKey("games.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "game_id",
+            sa.String(),
+            sa.ForeignKey("games.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("platform", sa.String(), nullable=False),
         sa.Column("acquisition_type", sa.String(), nullable=False),
         sa.Column("acquired_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("priority", sa.Integer(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column("notes", sa.String(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.UniqueConstraint("user_id", "game_id", "platform", name="uq_user_game_platform"),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.UniqueConstraint(
+            "user_id", "game_id", "platform", name="uq_user_game_platform"
+        ),
     )
     op.create_index("ix_collection_user", "collection_items", ["user_id"])
     op.create_index("ix_collection_platform", "collection_items", ["platform"])
@@ -51,8 +80,18 @@ def upgrade() -> None:
         "playthroughs",
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("user_id", sa.String(), nullable=False),
-        sa.Column("game_id", sa.String(), sa.ForeignKey("games.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("collection_id", sa.String(), sa.ForeignKey("collection_items.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "game_id",
+            sa.String(),
+            sa.ForeignKey("games.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "collection_id",
+            sa.String(),
+            sa.ForeignKey("collection_items.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("status", sa.String(), nullable=False),
         sa.Column("platform", sa.String(), nullable=False),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
@@ -62,8 +101,18 @@ def upgrade() -> None:
         sa.Column("difficulty", sa.String(), nullable=True),
         sa.Column("rating", sa.Integer(), nullable=True),
         sa.Column("notes", sa.String(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
     )
     op.create_index("ix_pt_user", "playthroughs", ["user_id"])
     op.create_index("ix_pt_status", "playthroughs", ["status"])
@@ -75,9 +124,21 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("user_id", sa.String(), nullable=False),
         sa.Column("refresh_token", sa.String(), nullable=True),
-        sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "active", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
     )
     op.create_index("ix_sessions_user", "sessions", ["user_id"])
 
@@ -97,4 +158,3 @@ def downgrade() -> None:
 
     op.drop_index("ix_games_title", table_name="games")
     op.drop_table("games")
-

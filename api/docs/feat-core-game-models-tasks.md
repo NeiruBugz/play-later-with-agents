@@ -19,43 +19,44 @@
 
 ## Tasks
 
-### Task 0 – Test environment bootstrap
+### [x] Task 0 – Test environment bootstrap
 - Add pytest to dev deps, `conftest.py` with FastAPI TestClient, basic factories, and helpers.
 - Seed minimal in-memory DB/test DB setup (depending on ORM wiring in Task 3/7).
 - Validate: `pytest` runs and a sample health test passes.
 - Commit: `test(api): bootstrap pytest, fixtures, and sample health test`
 
-### Task 1 – Add API versioning
+### [x] Task 1 – Add API versioning
 - Introduce `/api/v1` router prefix and tags; wire `health` under v1.
 - Validate: `GET /api/v1/health` returns HealthResponse in tests; schema shows v1 paths.
 - Commit: `feat(api): introduce /api/v1 base router`
 
-### Task 2 – Base error model
+### [x] Task 2 – Base error model
 - Add standard error response schema and exception handlers to match docs (422/404/401 shape with `request_id`).
 - Validate: tests assert error body structure and status codes.
 - Commit: `feat(api): add standard error responses`
 
-### Task 3 – Settings + DB wiring
+### [x] Task 3 – Settings + DB wiring
 - Add SQLAlchemy engine/session factory and config (env). No endpoints yet.
 - Validate: app boots; session dependency works in tests.
 - Commit: `chore(api): configure database engine and session`
 
-### Task 4 – Auth dependency stub
+### [x] Task 4 – Auth dependency stub
 - Implement dependency that extracts user ID (Cognito later, stub now) and enforce auth on protected routes.
 - Validate: protected test route returns 401 without session, 200 with stub.
 - Commit: `feat(api): add auth dependency and protect v1 routes`
 
-### Task 5 – Session model (optional now)
+### [x] Task 5 – Session model (optional now)
 - Add minimal session storage schema per docs.
 - Validate: session create/read tested via utility functions.
 - Commit: `feat(api): add session storage schema`
 
-### Task 6 – Pydantic schemas
+### [x] Task 6 – Pydantic schemas
 - Define DTOs for Game, CollectionItem, Playthrough, enums, pagination/results, stats as per docs.
 - Validate: openapi includes schemas; tests import and validate dataclasses.
 - Commit: `feat(api): add DTOs for games, collection, playthroughs`
 
 ### Task 7 – ORM models + migration
+- Progress: ORM models implemented and validated via tests; Alembic migration pending.
 - SQLAlchemy models and initial Alembic migration for games, collection, playthroughs.
 - Validate: migration runs in test setup; tables exist; simple CRUD tested.
 - Commit: `feat(api): add ORM models and initial migration`
@@ -184,4 +185,3 @@
 - Document the test-first workflow, per-task checklist, and generation steps.
 - Validate: content reflects the final process.
 - Commit: `docs: update AGENTS.md with testing and contract flow`
-

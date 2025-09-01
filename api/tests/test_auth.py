@@ -30,4 +30,3 @@ def test_auth_cookie_allows_access(client: TestClient) -> None:
     resp = client.get("/api/v1/_auth-check")
     assert resp.status_code == 200
     assert resp.json() == {"user_id": "cookie-user"}
-

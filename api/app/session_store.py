@@ -13,12 +13,17 @@ from app.db import Base as _Base
 
 class Base(_Base):
     __abstract__ = True
-    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid4().hex)
+    id: Mapped[str] = mapped_column(
+        String, primary_key=True, default=lambda: uuid4().hex
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
 
 
@@ -30,7 +35,9 @@ class SessionRecord(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
-def create_session(db: Session, *, user_id: str, refresh_token: Optional[str] = None) -> SessionRecord:
+def create_session(
+    db: Session, *, user_id: str, refresh_token: Optional[str] = None
+) -> SessionRecord:
     rec = SessionRecord(user_id=user_id, refresh_token=refresh_token)
     db.add(rec)
     db.commit()
@@ -50,4 +57,3 @@ def deactivate_session(db: Session, session_id: str) -> bool:
     db.add(rec)
     db.commit()
     return True
-

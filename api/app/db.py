@@ -25,7 +25,9 @@ _engine = create_engine(
     else {},
 )
 
-SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False, future=True)
+SessionLocal = sessionmaker(
+    bind=_engine, autoflush=False, autocommit=False, future=True
+)
 
 
 class Base(DeclarativeBase):

@@ -18,4 +18,3 @@ def test_db_dependency(client: TestClient) -> None:
     resp = client.get("/api/v1/_db-check")
     assert resp.status_code == 200
     assert resp.json() == {"ok": True}
-

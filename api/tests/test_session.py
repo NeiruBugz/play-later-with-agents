@@ -6,11 +6,16 @@ from sqlalchemy.orm import Session
 
 from app.main import app
 from app.db import get_db, Base as DBBase, SessionLocal
-from app.session_store import create_session, get_session, deactivate_session, SessionRecord
+from app.session_store import (
+    create_session,
+    get_session,
+    deactivate_session,
+    SessionRecord,
+)
 
 
 # Ensure tables exist for tests
-DBBase.metadata.create_all(bind=SessionLocal.kw['bind'])
+DBBase.metadata.create_all(bind=SessionLocal.kw["bind"])
 
 
 @app.post("/api/v1/_test/session", include_in_schema=False)
@@ -48,4 +53,3 @@ def test_session_crud_via_store(client: TestClient) -> None:
     r = client.post(f"/api/v1/_test/session/{sid}/deactivate")
     assert r.status_code == 200
     assert r.json()["success"] is True
-

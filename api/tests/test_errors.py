@@ -23,14 +23,16 @@ def test_404_error_shape(client: TestClient) -> None:
 def test_validation_error_handler_formats_details() -> None:
     scope: dict[str, Any] = {"type": "http", "method": "GET", "path": "/"}
     request = Request(scope)  # type: ignore[arg-type]
-    exc = RequestValidationError([
-        {
-            "type": "missing",
-            "loc": ("body", "title"),
-            "msg": "Field required",
-            "input": None,
-        }
-    ])
+    exc = RequestValidationError(
+        [
+            {
+                "type": "missing",
+                "loc": ("body", "title"),
+                "msg": "Field required",
+                "input": None,
+            }
+        ]
+    )
 
     resp = asyncio.run(handle_request_validation_error(request, exc))
     assert resp.status_code == 422

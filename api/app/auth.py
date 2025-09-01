@@ -25,4 +25,3 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=401, detail="Authentication required")
     return CurrentUser(id=user_id)
-

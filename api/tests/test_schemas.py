@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from app.schemas import (
     AcquisitionType,
@@ -31,8 +31,8 @@ def test_collection_item_priority_validation() -> None:
         acquisition_type=AcquisitionType.DIGITAL,
         priority=3,
         is_active=True,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     assert c.priority == 3
 
@@ -47,7 +47,7 @@ def test_playthrough_list_item_status_enum() -> None:
         collection=CollectionSnippet(
             id="c1", platform="PS5", acquisition_type=AcquisitionType.DIGITAL
         ),
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
     assert p.status == PlaythroughStatus.PLAYING

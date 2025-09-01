@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
-    return dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc).isoformat()
+    return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
 def _get_request_id(request: Request) -> str:

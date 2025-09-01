@@ -123,7 +123,7 @@ def upgrade() -> None:
         "sessions",
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("user_id", sa.String(), nullable=False),
-        sa.Column("refresh_token", sa.String(), nullable=True),
+        sa.Column("refresh_token_hash", sa.String(), nullable=True),
         sa.Column(
             "active", sa.Boolean(), nullable=False, server_default=sa.text("true")
         ),

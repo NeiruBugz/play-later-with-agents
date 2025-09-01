@@ -65,12 +65,12 @@ async def cognito_callback(
     session_id = secrets.token_urlsafe(32)
     user_id = token_data["id_token_claims"]["sub"]
     
-    # Store session in database/redis
+    # Store session in database with hashed tokens
     await store_session(
         session_id=session_id,
         user_id=user_id,
-        access_token=token_data["access_token"],
-        refresh_token=token_data["refresh_token"],
+        access_token=token_data["access_token"],  # Consider hashing this too
+        refresh_token=token_data["refresh_token"],  # Stored as salted SHA-256 hash
         expires_at=datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
     )
     
@@ -134,11 +134,11 @@ class SessionStore:
         refresh_token: str,
         expires_at: datetime
     ):
-        """Store session data."""
+        """Store session data with hashed refresh token."""
         session_data = {
             "user_id": user_id,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
+            "access_token": access_token,  # TODO: Consider hashing
+            "refresh_token_hash": hash_token(refresh_token),  # Salted SHA-256 hash
             "expires_at": expires_at.isoformat(),
             "created_at": datetime.utcnow().isoformat()
         }
@@ -223,15 +223,17 @@ async def refresh_session(
     
     session_data = await session_store.get_session(user.session_id)
     
-    # Use refresh token to get new access token
-    new_tokens = await refresh_cognito_token(session_data["refresh_token"])
+    # Verify refresh token hash and get plaintext token
+    if not verify_refresh_token(user.session_id, provided_refresh_token):
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
     
-    # Update session with new tokens
-    await session_store.store_session(
+    # Use refresh token to get new access token
+    new_tokens = await refresh_cognito_token(provided_refresh_token)
+    
+    # Update session with new tokens (refresh token hash remains same)
+    await session_store.update_session_tokens(
         session_id=user.session_id,
-        user_id=user.user_id,
         access_token=new_tokens["access_token"],
-        refresh_token=session_data["refresh_token"],  # Refresh token stays same
         expires_at=datetime.utcnow() + timedelta(seconds=new_tokens["expires_in"])
     )
     
@@ -353,18 +355,51 @@ SECURE_COOKIES=true
 
 ## Database Schema for Sessions (Alternative to Redis)
 ```sql
-CREATE TABLE user_sessions (
+CREATE TABLE sessions (
     id VARCHAR(64) PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
-    access_token TEXT NOT NULL,
-    refresh_token TEXT NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
+    refresh_token_hash VARCHAR(256),  -- Salted SHA-256 hash (salt:hash format)
+    active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sessions_user_id ON user_sessions(user_id);
-CREATE INDEX idx_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 ```
+
+### Security Features
+
+#### Refresh Token Hashing
+Refresh tokens are stored as salted SHA-256 hashes for security:
+
+```python
+def hash_token(token: str) -> str:
+    """Generate salted SHA-256 hash of a token.
+    
+    Format: salt:hash where both salt and hash are hex-encoded.
+    The salt is 32 bytes (64 hex chars) and hash is 32 bytes (64 hex chars).
+    """
+    salt = secrets.token_bytes(32)
+    hash_bytes = hashlib.sha256(salt + token.encode("utf-8")).digest()
+    return f"{salt.hex()}:{hash_bytes.hex()}"
+
+def verify_token(token: str, stored_hash: str) -> bool:
+    """Verify a token against a stored salted hash."""
+    try:
+        salt_hex, hash_hex = stored_hash.split(":", 1)
+        salt = bytes.fromhex(salt_hex)
+        stored_hash_bytes = bytes.fromhex(hash_hex)
+        
+        computed_hash = hashlib.sha256(salt + token.encode("utf-8")).digest()
+        return secrets.compare_digest(computed_hash, stored_hash_bytes)
+    except (ValueError, TypeError):
+        return False
+```
+
+**Security Benefits:**
+- **No plaintext tokens in database** - Even with DB access, tokens can't be read
+- **Unique salt per token** - Prevents rainbow table attacks  
+- **Constant-time comparison** - Prevents timing attacks
+- **Cryptographically secure** - SHA-256 with 32-byte random salt
 
 This approach provides maximum security while maintaining a smooth user experience with automatic session management.

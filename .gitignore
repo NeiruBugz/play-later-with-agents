@@ -21,3 +21,6 @@ api/.venv/
 *.tfstate.backup
 .terraform/
 crash.log
+
+# Generated API files
+web/src/shared/api/generated/

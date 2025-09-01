@@ -24,3 +24,4 @@ crash.log
 
 # Generated API files
 web/src/shared/api/generated/
+api/*.db

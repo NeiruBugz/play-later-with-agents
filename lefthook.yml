@@ -5,6 +5,9 @@ pre-commit:
       run: pnpm lint
     backend-format:
       run: source api/.venv/bin/activate && cd api && poetry run ruff format
+    schema-generation:
+      glob: "api/**/*.py"
+      run: source api/.venv/bin/activate && cd api && python scripts/generate_schema.py && cd ../web && pnpm gen:api
     infra-format:
       run: terraform fmt -recursive infra
 

@@ -1,3 +1,13 @@
+pre-commit:
+  commands:
+    frontend-lint:
+      root: "web/"
+      run: pnpm lint
+    backend-format:
+      run: source api/.venv/bin/activate && cd api && poetry run ruff format
+    infra-format:
+      run: terraform fmt -recursive infra
+
 commit-msg:
   commands:
     lint-commit-msg:

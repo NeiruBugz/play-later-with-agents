@@ -8,7 +8,7 @@
     "build": "vite build && tsc",
     "serve": "vite preview",
     "test": "vitest run",
-    "gen:api": "openapi-ts --input ../contract/openapi.json --output ./src/api -c @hey-api/client-axios",
+    "gen:api": "rm -rf ./src/shared/api/generated && openapi-ts --input ../contract/openapi.json --output ./src/shared/api/generated -c @hey-api/client-axios",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {

@@ -10,7 +10,7 @@ import globals from 'globals';
 export default tseslint.config(
   {
     // Global ignores
-    ignores: ['dist', 'node_modules'],
+    ignores: ['dist', 'node_modules', 'src/shared/api/generated/**'],
   },
   // Base configurations
   js.configs.recommended,

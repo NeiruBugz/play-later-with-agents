@@ -1,0 +1,9 @@
+# API Specification Documentation
+
+This directory contains detailed API endpoint specifications, request/response formats, and usage examples.
+
+## Structure
+
+- `collection-endpoints.md` - Game collection management API
+- `playthrough-endpoints.md` - Playthrough lifecycle API
+- `filtering-examples.md` - Query parameter examples and patterns

@@ -6,10 +6,10 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/health": {
+    "/api/v1/health": {
       "get": {
         "summary": "Health Check",
-        "operationId": "health_check_health_get",
+        "operationId": "health_check_api_v1_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",

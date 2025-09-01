@@ -1,0 +1,8 @@
+# Database Documentation
+
+This directory contains database schema design, migration strategies, and performance optimization documentation.
+
+## Structure
+
+- `schema-design.md` - Database schema, tables, and relationships
+- `migrations.md` - Migration planning and database evolution strategy

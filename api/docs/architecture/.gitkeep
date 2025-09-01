@@ -1,0 +1,9 @@
+# Architecture Documentation
+
+This directory contains detailed documentation about the system architecture, entity relationships, and design patterns used in the Play Later API.
+
+## Structure
+
+- `entities.md` - Core entity models and relationships
+- `authentication.md` - AWS Cognito integration and security
+- `filtering.md` - Advanced filtering patterns and performance optimization

@@ -25,83 +25,83 @@ router = APIRouter(prefix="/collection", tags=["collection"])
 async def list_collection(
     # Filtering parameters
     platform: Optional[str] = Query(None, description="Filter by platform"),
-    acquisition_type: Optional[AcquisitionType] = Query(None, description="Filter by acquisition type"),
-    priority: Optional[int] = Query(None, ge=1, le=5, description="Filter by priority (1-5)"),
+    acquisition_type: Optional[AcquisitionType] = Query(
+        None, description="Filter by acquisition type"
+    ),
+    priority: Optional[int] = Query(
+        None, ge=1, le=5, description="Filter by priority (1-5)"
+    ),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search in game title or notes"),
-    
     # Sorting parameters
-    sort_by: CollectionSortBy = Query(CollectionSortBy.UPDATED_AT, description="Sort field"),
+    sort_by: CollectionSortBy = Query(
+        CollectionSortBy.UPDATED_AT, description="Sort field"
+    ),
     sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
-    
     # Pagination parameters
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
-    
     # Dependencies
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CollectionListResponse:
     """Get user's game collection with filtering, sorting, and pagination."""
-    
+
     # Build base query - start with CollectionItem joined with Game
     query = (
         select(CollectionItem, Game)
         .join(Game, CollectionItem.game_id == Game.id)
         .where(CollectionItem.user_id == current_user.id)
     )
-    
+
     # Apply filters
     filters = []
-    
+
     if platform:
         filters.append(CollectionItem.platform == platform)
-    
+
     if acquisition_type:
         filters.append(CollectionItem.acquisition_type == acquisition_type.value)
-    
+
     if priority is not None:
         filters.append(CollectionItem.priority == priority)
-    
+
     if is_active is not None:
         filters.append(CollectionItem.is_active == is_active)
-    
+
     if search:
         # Search in game title or collection notes (Game is already joined)
         search_term = f"%{search}%"
         filters.append(
-            or_(
-                Game.title.ilike(search_term),
-                CollectionItem.notes.ilike(search_term)
-            )
+            or_(Game.title.ilike(search_term), CollectionItem.notes.ilike(search_term))
         )
-    
+
     # Apply all filters
     if filters:
         query = query.where(and_(*filters))
-    
+
     # Apply sorting
     # Map sort field to the correct table column
     if sort_by.value == "title":
         sort_column = Game.title  # Title comes from Game table
     else:
         sort_column = getattr(CollectionItem, sort_by.value)
-    
+
     if sort_order == "desc":
         query = query.order_by(desc(sort_column))
     else:
         query = query.order_by(asc(sort_column))
-    
+
     # Get total count before pagination
     count_query = select(func.count()).select_from(query.subquery())
     total_count = db.scalar(count_query)
-    
+
     # Apply pagination
     query = query.offset(offset).limit(limit)
-    
+
     # Execute query - get both CollectionItem and Game
     results = db.execute(query).all()
-    
+
     # Convert to response models
     items = []
     for collection_item, game in results:
@@ -110,7 +110,7 @@ async def list_collection(
             Playthrough.collection_id == collection_item.id
         )
         playthroughs = db.scalars(playthroughs_query).all()
-        
+
         # Convert to response model
         game_detail = GameDetail(
             id=game.id,
@@ -122,20 +122,24 @@ async def list_collection(
             hltb_id=game.hltb_id,
             steam_app_id=game.steam_app_id,
         )
-        
+
         # Convert playthroughs to dict format
         playthrough_dicts = []
         for pt in playthroughs:
-            playthrough_dicts.append({
-                "id": pt.id,
-                "status": pt.status,
-                "platform": pt.platform,
-                "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
-                "play_time_hours": pt.play_time_hours,
-                "rating": pt.rating,
-            })
-        
+            playthrough_dicts.append(
+                {
+                    "id": pt.id,
+                    "status": pt.status,
+                    "platform": pt.platform,
+                    "started_at": pt.started_at.isoformat() if pt.started_at else None,
+                    "completed_at": pt.completed_at.isoformat()
+                    if pt.completed_at
+                    else None,
+                    "play_time_hours": pt.play_time_hours,
+                    "rating": pt.rating,
+                }
+            )
+
         expanded_item = CollectionItemExpanded(
             id=collection_item.id,
             user_id=collection_item.user_id,
@@ -151,7 +155,7 @@ async def list_collection(
             updated_at=collection_item.updated_at,
         )
         items.append(expanded_item)
-    
+
     return CollectionListResponse(
         items=items,
         total_count=total_count or 0,
@@ -165,5 +169,5 @@ async def list_collection(
             "search": search,
             "sort_by": sort_by.value,
             "sort_order": sort_order,
-        }
+        },
     )

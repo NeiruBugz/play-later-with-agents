@@ -15,17 +15,17 @@ def main():
     """Generate and save OpenAPI schema."""
     # Get the OpenAPI schema from FastAPI
     openapi_schema = app.openapi()
-    
+
     # Path to save the schema (relative to api directory)
     contract_dir = Path(__file__).parent.parent.parent / "contract"
     contract_dir.mkdir(exist_ok=True)
-    
+
     schema_path = contract_dir / "openapi.json"
-    
+
     # Save the schema
     with open(schema_path, "w") as f:
         json.dump(openapi_schema, f, indent=2)
-    
+
     print(f"OpenAPI schema generated and saved to {schema_path}")
 
 

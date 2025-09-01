@@ -185,7 +185,7 @@ class PlaythroughStats(BaseModel):
 class BacklogItem(BaseModel):
     id: str
     game: GameSummary
-    collection: Optional[dict] = None
+    collection: Optional[CollectionSnippet] = None
     status: Literal["PLANNING"] = "PLANNING"
     created_at: datetime
 

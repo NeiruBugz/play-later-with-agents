@@ -638,3 +638,154 @@ def test_create_collection_item_all_acquisition_types(test_data):
         data = response.json()
         assert data["acquisition_type"] == acq_type
         assert data["priority"] == (i % 5) + 1
+
+
+# ===== GET /collection/{id} tests =====
+
+
+def test_get_collection_item_requires_auth():
+    """Test that collection get endpoint requires authentication."""
+    response = client.get("/api/v1/collection/col1")
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_get_collection_item_success(test_data):
+    """Test successful retrieval of collection item."""
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col1"
+    assert data["user_id"] == "user1"
+    assert data["game"]["id"] == "game1"
+    assert data["game"]["title"] == "The Witcher 3"
+    assert data["platform"] == "PC"
+    assert data["acquisition_type"] == "DIGITAL"
+    assert data["priority"] == 1
+    assert data["is_active"] is True
+    assert data["notes"] == "Great RPG"
+    assert len(data["playthroughs"]) == 1  # Has one playthrough
+    assert data["playthroughs"][0]["status"] == "COMPLETED"
+    assert "created_at" in data
+    assert "updated_at" in data
+
+
+def test_get_collection_item_with_playthroughs(test_data):
+    """Test that collection item includes complete playthrough data."""
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    playthrough = data["playthroughs"][0]
+    assert playthrough["id"] == "pt1"
+    assert playthrough["status"] == "COMPLETED"
+    assert playthrough["platform"] == "PC"
+    assert playthrough["play_time_hours"] == 150.5
+    assert playthrough["rating"] == 9
+    # Note: started_at and completed_at are not set in test data, so they should be None
+
+
+def test_get_collection_item_without_playthroughs(test_data):
+    """Test collection item that has no playthroughs."""
+    response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col3"
+    assert data["game"]["title"] == "Hollow Knight"
+    assert data["playthroughs"] == []  # No playthroughs
+
+
+def test_get_collection_item_not_found(test_data):
+    """Test 404 when collection item doesn't exist."""
+    response = client.get("/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"})
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_get_collection_item_wrong_user(test_data):
+    """Test that users can't access other users' collection items."""
+    # user1's collection item, but accessed by user2
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user2"})
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_get_collection_item_user_isolation(test_data):
+    """Test proper user isolation - users only see their own items."""
+    # User1 can see their own items
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["user_id"] == "user1"
+    
+    response = client.get("/api/v1/collection/col2", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["user_id"] == "user1"
+    
+    # User2 can see their own items
+    response = client.get("/api/v1/collection/col4", headers={"X-User-Id": "user2"})
+    assert response.status_code == 200
+    assert response.json()["user_id"] == "user2"
+    
+    # But user2 cannot see user1's items
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user2"})
+    assert response.status_code == 404
+
+
+def test_get_collection_item_includes_all_game_details(test_data):
+    """Test that response includes full game details."""
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    game = data["game"]
+    assert game["id"] == "game1"
+    assert game["title"] == "The Witcher 3"
+    assert game["cover_image_id"] == "tw3_cover"
+    assert game["igdb_id"] == 1942
+    # description, release_date, hltb_id, steam_app_id should be None in test data
+    assert game["description"] is None
+    assert game["release_date"] is None
+    assert game["hltb_id"] is None
+    assert game["steam_app_id"] is None
+
+
+def test_get_collection_item_inactive_item(test_data):
+    """Test that inactive collection items can still be retrieved."""
+    response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col3"
+    assert data["is_active"] is False
+    assert data["game"]["title"] == "Hollow Knight"
+
+
+def test_get_collection_item_all_fields_present(test_data):
+    """Test that response includes all expected fields."""
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    
+    data = response.json()
+    
+    # Collection item fields
+    required_fields = [
+        "id", "user_id", "platform", "acquisition_type", "is_active", 
+        "created_at", "updated_at", "game", "playthroughs"
+    ]
+    for field in required_fields:
+        assert field in data, f"Missing required field: {field}"
+    
+    # Optional fields that might be None
+    optional_fields = ["acquired_at", "priority", "notes"]
+    for field in optional_fields:
+        assert field in data, f"Missing optional field: {field}"
+    
+    # Game fields
+    game_fields = [
+        "id", "title", "cover_image_id", "release_date", "description", 
+        "igdb_id", "hltb_id", "steam_app_id"
+    ]
+    for field in game_fields:
+        assert field in data["game"], f"Missing game field: {field}"

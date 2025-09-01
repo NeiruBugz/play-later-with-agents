@@ -270,3 +270,81 @@ async def create_collection_item(
         created_at=collection_item.created_at,
         updated_at=collection_item.updated_at,
     )
+
+
+@router.get("/{collection_id}", response_model=CollectionItemExpanded)
+async def get_collection_item(
+    collection_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CollectionItemExpanded:
+    """Get a collection item by ID for the authenticated user."""
+    
+    # Query for the collection item with joined game data
+    query = (
+        select(CollectionItem, Game)
+        .join(Game, CollectionItem.game_id == Game.id)
+        .where(
+            and_(
+                CollectionItem.id == collection_id,
+                CollectionItem.user_id == current_user.id
+            )
+        )
+    )
+    
+    result = db.execute(query).first()
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Collection item not found"
+        )
+    
+    collection_item, game = result
+    
+    # Get playthroughs for this collection item
+    playthroughs_query = select(Playthrough).where(
+        Playthrough.collection_id == collection_item.id
+    )
+    playthroughs = db.scalars(playthroughs_query).all()
+    
+    # Convert to response model
+    game_detail = GameDetail(
+        id=game.id,
+        title=game.title,
+        cover_image_id=game.cover_image_id,
+        release_date=game.release_date,
+        description=game.description,
+        igdb_id=game.igdb_id,
+        hltb_id=game.hltb_id,
+        steam_app_id=game.steam_app_id,
+    )
+    
+    # Convert playthroughs to dict format
+    playthrough_dicts = []
+    for pt in playthroughs:
+        playthrough_dicts.append(
+            {
+                "id": pt.id,
+                "status": pt.status,
+                "platform": pt.platform,
+                "started_at": pt.started_at.isoformat() if pt.started_at else None,
+                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
+                "play_time_hours": pt.play_time_hours,
+                "rating": pt.rating,
+            }
+        )
+    
+    return CollectionItemExpanded(
+        id=collection_item.id,
+        user_id=collection_item.user_id,
+        game=game_detail,
+        platform=collection_item.platform,
+        acquisition_type=AcquisitionType(collection_item.acquisition_type),
+        acquired_at=collection_item.acquired_at,
+        priority=collection_item.priority,
+        is_active=collection_item.is_active,
+        notes=collection_item.notes,
+        playthroughs=playthrough_dicts,
+        created_at=collection_item.created_at,
+        updated_at=collection_item.updated_at,
+    )

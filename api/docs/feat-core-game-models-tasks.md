@@ -71,7 +71,7 @@
 - Validate: 201 on create; 409 on duplicate; invalid data 422.
 - Commit: `feat(api): add collection create endpoint`
 
-### Task 10 – GET /collection/{id}
+### [x] Task 10 – GET /collection/{id}
 - Fetch by ID with embedded game and playthrough summary.
 - Validate: 200/404 cases.
 - Commit: `feat(api): add collection get by id`

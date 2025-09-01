@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.models import WelcomeResponse
 from app.exception_handlers import register_exception_handlers, request_id_middleware
-from app.routers import health
+from app.routers import health, collection
 
 
 def create_app() -> FastAPI:
@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
 
     # Include versioned routers
     app.include_router(health.router, prefix="/api/v1")
+    app.include_router(collection.router, prefix="/api/v1")
 
     # Root endpoint
     @app.get("/", response_model=WelcomeResponse)

@@ -55,13 +55,13 @@
 - Validate: openapi includes schemas; tests import and validate dataclasses.
 - Commit: `feat(api): add DTOs for games, collection, playthroughs`
 
-### Task 7 – ORM models + migration
+### [x] Task 7 – ORM models + migration
 - Progress: ORM models implemented and validated via tests; Alembic migration pending.
 - SQLAlchemy models and initial Alembic migration for games, collection, playthroughs.
 - Validate: migration runs in test setup; tables exist; simple CRUD tested.
 - Commit: `feat(api): add ORM models and initial migration`
 
-### Task 8 – GET /collection
+### [x] Task 8 – GET /collection
 - Implement list with filtering, sorting, pagination; auth enforced.
 - Validate: tests cover filters, pagination, unauthorized.
 - Commit: `feat(api): list user collection with filters`

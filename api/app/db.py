@@ -16,12 +16,13 @@ def _make_engine_url() -> str:
 
 
 # Create engine and session factory
+engine_url = _make_engine_url()
 _engine = create_engine(
-    _make_engine_url(),
+    engine_url,
     future=True,
     pool_pre_ping=True,
     connect_args={"check_same_thread": False}
-    if "sqlite" in (_make_engine_url())
+    if engine_url.startswith("sqlite")
     else {},
 )
 

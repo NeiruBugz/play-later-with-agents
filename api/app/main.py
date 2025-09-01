@@ -23,8 +23,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Include routers
-    app.include_router(health.router)
+    # Include versioned routers
+    app.include_router(health.router, prefix="/api/v1")
 
     # Root endpoint
     @app.get("/", response_model=WelcomeResponse)

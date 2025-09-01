@@ -44,7 +44,9 @@ def test_playthrough_list_item_status_enum() -> None:
         status=PlaythroughStatus.PLAYING,
         platform="PS5",
         game=GameSummary(id="game_1", title="Foo"),
-        collection=CollectionSnippet(id="c1", platform="PS5", acquisition_type=AcquisitionType.DIGITAL),
+        collection=CollectionSnippet(
+            id="c1", platform="PS5", acquisition_type=AcquisitionType.DIGITAL
+        ),
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )

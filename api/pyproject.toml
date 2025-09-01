@@ -10,6 +10,9 @@ fastapi = "^0.110.0"
 uvicorn = "^0.22.0"
 pydantic-settings = "^2.0.0"
 
+[tool.poetry.scripts]
+generate-schema = "scripts.generate_schema:main"
+
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.1.0"
 

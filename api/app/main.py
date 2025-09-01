@@ -2,12 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.models import WelcomeResponse
 from app.routers import health
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
+        description="A gaming backlog management application",
+        version="0.1.0",
         debug=settings.debug,
     )
 
@@ -24,9 +27,9 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
 
     # Root endpoint
-    @app.get("/")
+    @app.get("/", response_model=WelcomeResponse)
     def read_root():
-        return {"message": f"Welcome to {settings.app_name}"}
+        return WelcomeResponse(message=f"Welcome to {settings.app_name}")
 
     return app
 

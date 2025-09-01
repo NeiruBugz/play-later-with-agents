@@ -1,8 +1,10 @@
 from fastapi import APIRouter
 
+from app.models import HealthResponse
+
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", response_model=HealthResponse)
 def health_check():
-    return {"status": "healthy", "message": "API is running"}
+    return HealthResponse(status="healthy", message="API is running")

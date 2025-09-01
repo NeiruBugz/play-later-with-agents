@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from typing import Optional
+from datetime import datetime, timezone
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, asc, func, select
+from sqlalchemy.exc import IntegrityError
 
 from app.auth import CurrentUser, get_current_user
 from app.db import get_db
@@ -12,6 +15,7 @@ from app.db_models import CollectionItem, Game, Playthrough
 from app.schemas import (
     CollectionListResponse,
     CollectionItemExpanded,
+    CollectionItemCreate,
     CollectionSortBy,
     AcquisitionType,
     GameDetail,
@@ -170,4 +174,96 @@ async def list_collection(
             "sort_by": sort_by.value,
             "sort_order": sort_order,
         },
+    )
+
+
+@router.post("", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED)
+async def create_collection_item(
+    item_data: CollectionItemCreate,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CollectionItemExpanded:
+    """Create a new collection item for the authenticated user."""
+    
+    # Check if the game exists
+    game_query = select(Game).where(Game.id == item_data.game_id)
+    game = db.scalar(game_query)
+    if not game:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game not found"
+        )
+    
+    # Create the collection item
+    collection_item = CollectionItem(
+        id=str(uuid4()),
+        user_id=current_user.id,
+        game_id=item_data.game_id,
+        platform=item_data.platform,
+        acquisition_type=item_data.acquisition_type.value,
+        acquired_at=item_data.acquired_at,
+        priority=item_data.priority,
+        is_active=True,
+        notes=item_data.notes,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    
+    try:
+        db.add(collection_item)
+        db.commit()
+        db.refresh(collection_item)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Collection item already exists for this user, game, and platform"
+        )
+    
+    # Get playthroughs for this collection item (will be empty for new items)
+    playthroughs_query = select(Playthrough).where(
+        Playthrough.collection_id == collection_item.id
+    )
+    playthroughs = db.scalars(playthroughs_query).all()
+    
+    # Convert to response model
+    game_detail = GameDetail(
+        id=game.id,
+        title=game.title,
+        cover_image_id=game.cover_image_id,
+        release_date=game.release_date,
+        description=game.description,
+        igdb_id=game.igdb_id,
+        hltb_id=game.hltb_id,
+        steam_app_id=game.steam_app_id,
+    )
+    
+    # Convert playthroughs to dict format (will be empty list)
+    playthrough_dicts = []
+    for pt in playthroughs:
+        playthrough_dicts.append(
+            {
+                "id": pt.id,
+                "status": pt.status,
+                "platform": pt.platform,
+                "started_at": pt.started_at.isoformat() if pt.started_at else None,
+                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
+                "play_time_hours": pt.play_time_hours,
+                "rating": pt.rating,
+            }
+        )
+    
+    return CollectionItemExpanded(
+        id=collection_item.id,
+        user_id=collection_item.user_id,
+        game=game_detail,
+        platform=collection_item.platform,
+        acquisition_type=AcquisitionType(collection_item.acquisition_type),
+        acquired_at=collection_item.acquired_at,
+        priority=collection_item.priority,
+        is_active=collection_item.is_active,
+        notes=collection_item.notes,
+        playthroughs=playthrough_dicts,
+        created_at=collection_item.created_at,
+        updated_at=collection_item.updated_at,
     )

@@ -77,6 +77,15 @@ class CollectionSnippet(BaseModel):
     is_active: bool = True
 
 
+class CollectionItemCreate(BaseModel):
+    game_id: str = Field(..., description="Game ID to add to collection")
+    platform: str = Field(..., description="Gaming platform")
+    acquisition_type: AcquisitionType = Field(..., description="How the game was acquired")
+    acquired_at: Optional[datetime] = Field(None, description="When the game was acquired")
+    priority: Optional[int] = Field(default=None, ge=1, le=5, description="Priority level (1-5)")
+    notes: Optional[str] = Field(None, description="Personal notes about the game")
+
+
 class CollectionItem(BaseModel):
     id: str
     user_id: str

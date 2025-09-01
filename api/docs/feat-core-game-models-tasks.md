@@ -66,7 +66,7 @@
 - Validate: tests cover filters, pagination, unauthorized.
 - Commit: `feat(api): list user collection with filters`
 
-### Task 9 – POST /collection
+### [x] Task 9 – POST /collection
 - Create item with validation (unique user+game+platform).
 - Validate: 201 on create; 409 on duplicate; invalid data 422.
 - Commit: `feat(api): add collection create endpoint`

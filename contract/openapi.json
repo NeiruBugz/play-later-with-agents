@@ -231,6 +231,80 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "collection"
+        ],
+        "summary": "Create Collection Item",
+        "description": "Create a new collection item for the authenticated user.",
+        "operationId": "create_collection_item_api_v1_collection_post",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionItemCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionItemExpanded"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/": {
@@ -264,6 +338,70 @@
           "RENTAL"
         ],
         "title": "AcquisitionType"
+      },
+      "CollectionItemCreate": {
+        "properties": {
+          "game_id": {
+            "type": "string",
+            "title": "Game Id",
+            "description": "Game ID to add to collection"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "description": "Gaming platform"
+          },
+          "acquisition_type": {
+            "$ref": "#/components/schemas/AcquisitionType",
+            "description": "How the game was acquired"
+          },
+          "acquired_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acquired At",
+            "description": "When the game was acquired"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority",
+            "description": "Priority level (1-5)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Personal notes about the game"
+          }
+        },
+        "type": "object",
+        "required": [
+          "game_id",
+          "platform",
+          "acquisition_type"
+        ],
+        "title": "CollectionItemCreate"
       },
       "CollectionItemExpanded": {
         "properties": {

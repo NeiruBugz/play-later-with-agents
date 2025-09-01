@@ -421,11 +421,7 @@ def test_create_collection_item_requires_auth():
     """Test that collection creation endpoint requires authentication."""
     response = client.post(
         "/api/v1/collection",
-        json={
-            "game_id": "game1",
-            "platform": "PC",
-            "acquisition_type": "DIGITAL"
-        }
+        json={"game_id": "game1", "platform": "PC", "acquisition_type": "DIGITAL"},
     )
     assert response.status_code == 401
     assert response.json()["error"] == "authentication_required"
@@ -441,11 +437,11 @@ def test_create_collection_item_success(test_data):
             "platform": "Switch",  # New platform for game1
             "acquisition_type": "PHYSICAL",
             "priority": 2,
-            "notes": "Birthday gift"
-        }
+            "notes": "Birthday gift",
+        },
     )
     assert response.status_code == 201
-    
+
     data = response.json()
     assert data["user_id"] == "user1"
     assert data["game"]["id"] == "game1"
@@ -466,14 +462,10 @@ def test_create_collection_item_minimal_data(test_data):
     response = client.post(
         "/api/v1/collection",
         headers={"X-User-Id": "user1"},
-        json={
-            "game_id": "game2",
-            "platform": "Switch",
-            "acquisition_type": "DIGITAL"
-        }
+        json={"game_id": "game2", "platform": "Switch", "acquisition_type": "DIGITAL"},
     )
     assert response.status_code == 201
-    
+
     data = response.json()
     assert data["user_id"] == "user1"
     assert data["game"]["id"] == "game2"
@@ -496,11 +488,11 @@ def test_create_collection_item_with_acquired_at(test_data):
             "acquisition_type": "PHYSICAL",
             "acquired_at": acquired_at,
             "priority": 1,
-            "notes": "Christmas present"
-        }
+            "notes": "Christmas present",
+        },
     )
     assert response.status_code == 201
-    
+
     data = response.json()
     assert data["acquired_at"] == acquired_at
     assert data["priority"] == 1
@@ -516,8 +508,8 @@ def test_create_collection_item_duplicate_conflict(test_data):
         json={
             "game_id": "game1",
             "platform": "PC",  # This combination already exists
-            "acquisition_type": "DIGITAL"
-        }
+            "acquisition_type": "DIGITAL",
+        },
     )
     assert response.status_code == 409
     assert "already exists" in response.json()["message"].lower()
@@ -531,8 +523,8 @@ def test_create_collection_item_nonexistent_game(test_data):
         json={
             "game_id": "nonexistent-game",
             "platform": "PC",
-            "acquisition_type": "DIGITAL"
-        }
+            "acquisition_type": "DIGITAL",
+        },
     )
     assert response.status_code == 404
     assert "Game not found" in response.json()["message"]
@@ -548,11 +540,11 @@ def test_create_collection_item_invalid_priority(test_data):
             "game_id": "game1",
             "platform": "Switch",
             "acquisition_type": "DIGITAL",
-            "priority": 0
-        }
+            "priority": 0,
+        },
     )
     assert response.status_code == 422
-    
+
     # Priority too high
     response = client.post(
         "/api/v1/collection",
@@ -561,8 +553,8 @@ def test_create_collection_item_invalid_priority(test_data):
             "game_id": "game1",
             "platform": "Switch",
             "acquisition_type": "DIGITAL",
-            "priority": 6
-        }
+            "priority": 6,
+        },
     )
     assert response.status_code == 422
 
@@ -572,11 +564,7 @@ def test_create_collection_item_invalid_acquisition_type(test_data):
     response = client.post(
         "/api/v1/collection",
         headers={"X-User-Id": "user1"},
-        json={
-            "game_id": "game1",
-            "platform": "PC",
-            "acquisition_type": "INVALID_TYPE"
-        }
+        json={"game_id": "game1", "platform": "PC", "acquisition_type": "INVALID_TYPE"},
     )
     assert response.status_code == 422
 
@@ -587,32 +575,23 @@ def test_create_collection_item_missing_required_fields(test_data):
     response = client.post(
         "/api/v1/collection",
         headers={"X-User-Id": "user1"},
-        json={
-            "platform": "PC",
-            "acquisition_type": "DIGITAL"
-        }
+        json={"platform": "PC", "acquisition_type": "DIGITAL"},
     )
     assert response.status_code == 422
-    
+
     # Missing platform
     response = client.post(
         "/api/v1/collection",
         headers={"X-User-Id": "user1"},
-        json={
-            "game_id": "game1",
-            "acquisition_type": "DIGITAL"
-        }
+        json={"game_id": "game1", "acquisition_type": "DIGITAL"},
     )
     assert response.status_code == 422
-    
+
     # Missing acquisition_type
     response = client.post(
         "/api/v1/collection",
         headers={"X-User-Id": "user1"},
-        json={
-            "game_id": "game1",
-            "platform": "PC"
-        }
+        json={"game_id": "game1", "platform": "PC"},
     )
     assert response.status_code == 422
 
@@ -627,11 +606,11 @@ def test_create_collection_item_user_isolation(test_data):
             "game_id": "game1",
             "platform": "PC",  # Same as user1's existing item
             "acquisition_type": "SUBSCRIPTION",
-            "notes": "Game Pass"
-        }
+            "notes": "Game Pass",
+        },
     )
     assert response.status_code == 201
-    
+
     data = response.json()
     assert data["user_id"] == "user2"
     assert data["game"]["id"] == "game1"
@@ -642,7 +621,7 @@ def test_create_collection_item_user_isolation(test_data):
 def test_create_collection_item_all_acquisition_types(test_data):
     """Test creating items with all valid acquisition types."""
     acquisition_types = ["PHYSICAL", "DIGITAL", "SUBSCRIPTION", "BORROWED", "RENTAL"]
-    
+
     for i, acq_type in enumerate(acquisition_types):
         response = client.post(
             "/api/v1/collection",
@@ -651,11 +630,11 @@ def test_create_collection_item_all_acquisition_types(test_data):
                 "game_id": f"game{(i % 3) + 1}",  # Cycle through available games
                 "platform": f"Platform{i}",  # Unique platform for each
                 "acquisition_type": acq_type,
-                "priority": (i % 5) + 1
-            }
+                "priority": (i % 5) + 1,
+            },
         )
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["acquisition_type"] == acq_type
         assert data["priority"] == (i % 5) + 1

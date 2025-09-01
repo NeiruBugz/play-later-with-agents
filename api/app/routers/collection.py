@@ -177,23 +177,24 @@ async def list_collection(
     )
 
 
-@router.post("", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED
+)
 async def create_collection_item(
     item_data: CollectionItemCreate,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CollectionItemExpanded:
     """Create a new collection item for the authenticated user."""
-    
+
     # Check if the game exists
     game_query = select(Game).where(Game.id == item_data.game_id)
     game = db.scalar(game_query)
     if not game:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Game not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
         )
-    
+
     # Create the collection item
     collection_item = CollectionItem(
         id=str(uuid4()),
@@ -208,7 +209,7 @@ async def create_collection_item(
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
-    
+
     try:
         db.add(collection_item)
         db.commit()
@@ -217,15 +218,15 @@ async def create_collection_item(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Collection item already exists for this user, game, and platform"
+            detail="Collection item already exists for this user, game, and platform",
         )
-    
+
     # Get playthroughs for this collection item (will be empty for new items)
     playthroughs_query = select(Playthrough).where(
         Playthrough.collection_id == collection_item.id
     )
     playthroughs = db.scalars(playthroughs_query).all()
-    
+
     # Convert to response model
     game_detail = GameDetail(
         id=game.id,
@@ -237,7 +238,7 @@ async def create_collection_item(
         hltb_id=game.hltb_id,
         steam_app_id=game.steam_app_id,
     )
-    
+
     # Convert playthroughs to dict format (will be empty list)
     playthrough_dicts = []
     for pt in playthroughs:
@@ -247,12 +248,14 @@ async def create_collection_item(
                 "status": pt.status,
                 "platform": pt.platform,
                 "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
+                "completed_at": pt.completed_at.isoformat()
+                if pt.completed_at
+                else None,
                 "play_time_hours": pt.play_time_hours,
                 "rating": pt.rating,
             }
         )
-    
+
     return CollectionItemExpanded(
         id=collection_item.id,
         user_id=collection_item.user_id,

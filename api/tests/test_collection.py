@@ -654,7 +654,7 @@ def test_get_collection_item_success(test_data):
     """Test successful retrieval of collection item."""
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col1"
     assert data["user_id"] == "user1"
@@ -675,7 +675,7 @@ def test_get_collection_item_with_playthroughs(test_data):
     """Test that collection item includes complete playthrough data."""
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
     playthrough = data["playthroughs"][0]
     assert playthrough["id"] == "pt1"
@@ -690,7 +690,7 @@ def test_get_collection_item_without_playthroughs(test_data):
     """Test collection item that has no playthroughs."""
     response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col3"
     assert data["game"]["title"] == "Hollow Knight"
@@ -699,7 +699,9 @@ def test_get_collection_item_without_playthroughs(test_data):
 
 def test_get_collection_item_not_found(test_data):
     """Test 404 when collection item doesn't exist."""
-    response = client.get("/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"})
+    response = client.get(
+        "/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"}
+    )
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
 
@@ -718,16 +720,16 @@ def test_get_collection_item_user_isolation(test_data):
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     assert response.json()["user_id"] == "user1"
-    
+
     response = client.get("/api/v1/collection/col2", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     assert response.json()["user_id"] == "user1"
-    
+
     # User2 can see their own items
     response = client.get("/api/v1/collection/col4", headers={"X-User-Id": "user2"})
     assert response.status_code == 200
     assert response.json()["user_id"] == "user2"
-    
+
     # But user2 cannot see user1's items
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user2"})
     assert response.status_code == 404
@@ -737,7 +739,7 @@ def test_get_collection_item_includes_all_game_details(test_data):
     """Test that response includes full game details."""
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
     game = data["game"]
     assert game["id"] == "game1"
@@ -755,7 +757,7 @@ def test_get_collection_item_inactive_item(test_data):
     """Test that inactive collection items can still be retrieved."""
     response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col3"
     assert data["is_active"] is False
@@ -766,26 +768,39 @@ def test_get_collection_item_all_fields_present(test_data):
     """Test that response includes all expected fields."""
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
-    
+
     data = response.json()
-    
+
     # Collection item fields
     required_fields = [
-        "id", "user_id", "platform", "acquisition_type", "is_active", 
-        "created_at", "updated_at", "game", "playthroughs"
+        "id",
+        "user_id",
+        "platform",
+        "acquisition_type",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "game",
+        "playthroughs",
     ]
     for field in required_fields:
         assert field in data, f"Missing required field: {field}"
-    
+
     # Optional fields that might be None
     optional_fields = ["acquired_at", "priority", "notes"]
     for field in optional_fields:
         assert field in data, f"Missing optional field: {field}"
-    
+
     # Game fields
     game_fields = [
-        "id", "title", "cover_image_id", "release_date", "description", 
-        "igdb_id", "hltb_id", "steam_app_id"
+        "id",
+        "title",
+        "cover_image_id",
+        "release_date",
+        "description",
+        "igdb_id",
+        "hltb_id",
+        "steam_app_id",
     ]
     for field in game_fields:
         assert field in data["game"], f"Missing game field: {field}"

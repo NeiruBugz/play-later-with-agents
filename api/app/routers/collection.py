@@ -279,7 +279,7 @@ async def get_collection_item(
     db: Session = Depends(get_db),
 ) -> CollectionItemExpanded:
     """Get a collection item by ID for the authenticated user."""
-    
+
     # Query for the collection item with joined game data
     query = (
         select(CollectionItem, Game)
@@ -287,26 +287,25 @@ async def get_collection_item(
         .where(
             and_(
                 CollectionItem.id == collection_id,
-                CollectionItem.user_id == current_user.id
+                CollectionItem.user_id == current_user.id,
             )
         )
     )
-    
+
     result = db.execute(query).first()
     if not result:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Collection item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Collection item not found"
         )
-    
+
     collection_item, game = result
-    
+
     # Get playthroughs for this collection item
     playthroughs_query = select(Playthrough).where(
         Playthrough.collection_id == collection_item.id
     )
     playthroughs = db.scalars(playthroughs_query).all()
-    
+
     # Convert to response model
     game_detail = GameDetail(
         id=game.id,
@@ -318,7 +317,7 @@ async def get_collection_item(
         hltb_id=game.hltb_id,
         steam_app_id=game.steam_app_id,
     )
-    
+
     # Convert playthroughs to dict format
     playthrough_dicts = []
     for pt in playthroughs:
@@ -328,12 +327,14 @@ async def get_collection_item(
                 "status": pt.status,
                 "platform": pt.platform,
                 "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
+                "completed_at": pt.completed_at.isoformat()
+                if pt.completed_at
+                else None,
                 "play_time_hours": pt.play_time_hours,
                 "rating": pt.rating,
             }
         )
-    
+
     return CollectionItemExpanded(
         id=collection_item.id,
         user_id=collection_item.user_id,

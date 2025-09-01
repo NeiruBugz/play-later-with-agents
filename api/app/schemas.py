@@ -74,7 +74,7 @@ class CollectionSnippet(BaseModel):
     acquisition_type: AcquisitionType
     acquired_at: Optional[datetime] = None
     priority: Optional[int] = Field(default=None, ge=1, le=5)
-    is_active: Optional[bool] = True
+    is_active: bool = True
 
 
 class CollectionItem(BaseModel):
@@ -101,7 +101,7 @@ class CollectionItemExpanded(BaseModel):
     priority: Optional[int] = Field(default=None, ge=1, le=5)
     is_active: bool = True
     notes: Optional[str] = None
-    playthroughs: list[dict] = []
+    playthroughs: list[dict] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 

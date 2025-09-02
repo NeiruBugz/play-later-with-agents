@@ -25,6 +25,7 @@ from app.schemas import (
     BulkCollectionResponse,
     BulkCollectionResult,
     BulkCollectionAction,
+    CollectionStats,
 )
 
 router = APIRouter(prefix="/collection", tags=["collection"])
@@ -179,6 +180,100 @@ async def list_collection(
             "sort_by": sort_by.value,
             "sort_order": sort_order,
         },
+    )
+
+
+@router.get("/stats", response_model=CollectionStats)
+async def get_collection_stats(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CollectionStats:
+    """Get user's collection statistics and insights."""
+
+    # Base query for user's collection items
+    base_query = (
+        select(CollectionItem, Game)
+        .join(Game, CollectionItem.game_id == Game.id)
+        .where(CollectionItem.user_id == current_user.id)
+    )
+
+    # Get all collection items for the user
+    results = db.execute(base_query).all()
+    collection_items = [item for item, game in results]
+
+    if not collection_items:
+        # Return empty stats for users with no collection
+        return CollectionStats(
+            total_games=0,
+            by_platform={},
+            by_acquisition_type={},
+            by_priority={},
+            value_estimate=None,
+            recent_additions=[],
+        )
+
+    # Calculate total games
+    total_games = len(collection_items)
+
+    # Calculate platform statistics
+    by_platform = {}
+    for item in collection_items:
+        platform = item.platform
+        by_platform[platform] = by_platform.get(platform, 0) + 1
+
+    # Calculate acquisition type statistics
+    by_acquisition_type = {}
+    for item in collection_items:
+        acq_type = item.acquisition_type
+        by_acquisition_type[acq_type] = by_acquisition_type.get(acq_type, 0) + 1
+
+    # Calculate priority statistics (convert None to "null" string)
+    by_priority = {}
+    for item in collection_items:
+        priority = str(item.priority) if item.priority is not None else "null"
+        by_priority[priority] = by_priority.get(priority, 0) + 1
+
+    # Calculate value estimate (placeholder implementation)
+    # For now, we'll return a basic estimate
+    digital_items = sum(
+        1 for item in collection_items if item.acquisition_type == "DIGITAL"
+    )
+    physical_items = sum(
+        1 for item in collection_items if item.acquisition_type == "PHYSICAL"
+    )
+
+    value_estimate = {
+        "digital": round(digital_items * 45.99, 2),  # Avg $45.99 per digital game
+        "physical": round(physical_items * 59.99, 2),  # Avg $59.99 per physical game
+        "currency": "USD",
+    }
+
+    # Get recent additions (items with acquired_at, sorted by date desc, limit to 5)
+    recent_additions = []
+    items_with_acquired_at = [
+        (item, game) for item, game in results if item.acquired_at is not None
+    ]
+
+    # Sort by acquired_at descending (most recent first)
+    items_with_acquired_at.sort(key=lambda x: x[0].acquired_at, reverse=True)
+
+    # Take top 5 and format for response
+    for item, game in items_with_acquired_at[:5]:
+        recent_additions.append(
+            {
+                "game": {"title": game.title, "cover_image_id": game.cover_image_id},
+                "platform": item.platform,
+                "acquired_at": item.acquired_at.isoformat(),
+            }
+        )
+
+    return CollectionStats(
+        total_games=total_games,
+        by_platform=by_platform,
+        by_acquisition_type=by_acquisition_type,
+        by_priority=by_priority,
+        value_estimate=value_estimate,
+        recent_additions=recent_additions,
     )
 
 

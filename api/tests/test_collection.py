@@ -1574,3 +1574,272 @@ def test_bulk_operations_large_batch(test_data):
     assert data["updated_count"] == 7
     assert data["total_count"] == 7
     assert len(data["results"]) == 7
+
+
+# ===== GET /collection/stats tests =====
+
+
+def test_collection_stats_requires_auth():
+    """Test that collection stats endpoint requires authentication."""
+    response = client.get("/api/v1/collection/stats")
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_collection_stats_success(test_data):
+    """Test successful retrieval of collection statistics."""
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Check basic structure
+    assert "total_games" in data
+    assert "by_platform" in data
+    assert "by_acquisition_type" in data
+    assert "by_priority" in data
+
+    # Check deterministic values based on test data
+    # user1 has 3 items: col1 (Witcher3/PC/DIGITAL/priority=1), col2 (Elden Ring/PS5/PHYSICAL/priority=2), col3 (Hollow Knight/PC/DIGITAL/priority=3/inactive)
+    assert data["total_games"] == 3
+
+    # Platform counts
+    assert data["by_platform"]["PC"] == 2  # col1, col3
+    assert data["by_platform"]["PS5"] == 1  # col2
+
+    # Acquisition type counts
+    assert data["by_acquisition_type"]["DIGITAL"] == 2  # col1, col3
+    assert data["by_acquisition_type"]["PHYSICAL"] == 1  # col2
+
+    # Priority counts (as strings since they're dict keys)
+    assert data["by_priority"]["1"] == 1  # col1
+    assert data["by_priority"]["2"] == 1  # col2
+    assert data["by_priority"]["3"] == 1  # col3
+
+
+def test_collection_stats_empty_collection():
+    """Test collection stats for user with no collection items."""
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user3"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_games"] == 0
+    assert data["by_platform"] == {}
+    assert data["by_acquisition_type"] == {}
+    assert data["by_priority"] == {}
+
+
+def test_collection_stats_user_isolation(test_data):
+    """Test that stats only include user's own items."""
+    # user2 has 1 item: col4 (Witcher3/Xbox/SUBSCRIPTION/priority=1)
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user2"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_games"] == 1
+    assert data["by_platform"]["Xbox"] == 1
+    assert data["by_acquisition_type"]["SUBSCRIPTION"] == 1
+    assert data["by_priority"]["1"] == 1
+
+
+def test_collection_stats_includes_inactive_items(test_data):
+    """Test that stats include inactive items by default."""
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Should include all 3 items (including inactive col3)
+    assert data["total_games"] == 3
+
+
+def test_collection_stats_with_null_priority(test_data):
+    """Test stats handling of items with null priority."""
+    # Create a collection item with null priority for testing
+    from app.db_models import CollectionItem
+    from app.schemas import AcquisitionType
+    from app.db import SessionLocal
+
+    with SessionLocal() as db:
+        # Add item with null priority
+        item = CollectionItem(
+            id="col_null_priority",
+            user_id="user1",
+            game_id="game1",
+            platform="Nintendo Switch",
+            acquisition_type=AcquisitionType.BORROWED.value,
+            priority=None,  # Null priority
+            is_active=True,
+            created_at=datetime(2023, 1, 10, tzinfo=timezone.utc),
+            updated_at=datetime(2023, 1, 10, tzinfo=timezone.utc),
+        )
+        db.add(item)
+        db.commit()
+
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Should now have 4 items
+    assert data["total_games"] == 4
+
+    # Check null priority is counted
+    assert "null" in data["by_priority"]
+    assert data["by_priority"]["null"] == 1
+
+    # Check new platform and acquisition type
+    assert data["by_platform"]["Nintendo Switch"] == 1
+    assert data["by_acquisition_type"]["BORROWED"] == 1
+
+
+def test_collection_stats_recent_additions(test_data):
+    """Test that recent additions are included and sorted by acquired_at."""
+    # Create items with specific acquired_at dates
+    from app.db_models import CollectionItem
+    from app.schemas import AcquisitionType
+    from app.db import SessionLocal
+
+    with SessionLocal() as db:
+        # Add items with acquired_at dates
+        recent_items = []
+        for i, (game_id, platform, acq_date) in enumerate(
+            [
+                (
+                    "game1",
+                    "Steam",
+                    datetime(2024, 3, 20, tzinfo=timezone.utc),
+                ),  # Most recent
+                ("game2", "Epic", datetime(2024, 3, 15, tzinfo=timezone.utc)),  # Middle
+                ("game3", "GOG", datetime(2024, 3, 10, tzinfo=timezone.utc)),  # Oldest
+            ]
+        ):
+            item = CollectionItem(
+                id=f"col_recent_{i}",
+                user_id="user1",
+                game_id=game_id,
+                platform=platform,
+                acquisition_type=AcquisitionType.DIGITAL.value,
+                acquired_at=acq_date,
+                priority=1,
+                is_active=True,
+                created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                updated_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            )
+            recent_items.append(item)
+            db.add(item)
+        db.commit()
+
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Check recent_additions exist and are sorted by acquired_at desc
+    assert "recent_additions" in data
+    recent = data["recent_additions"]
+    assert len(recent) >= 3
+
+    # Should be sorted by acquired_at descending (most recent first)
+    # The first item should be from Steam (2024-03-20)
+    assert recent[0]["platform"] == "Steam"
+    assert recent[0]["game"]["title"] == "The Witcher 3"  # game1
+
+
+def test_collection_stats_aggregation_accuracy(test_data):
+    """Test that all aggregations are mathematically correct."""
+    # Add more diverse data to test aggregations
+    from app.db_models import CollectionItem
+    from app.schemas import AcquisitionType
+    from app.db import SessionLocal
+
+    test_items = [
+        ("game1", "PS4", AcquisitionType.PHYSICAL, 1),
+        ("game2", "PS4", AcquisitionType.DIGITAL, 2),  # Different game same platform
+        ("game2", "Xbox", AcquisitionType.SUBSCRIPTION, None),
+        ("game3", "Steam", AcquisitionType.RENTAL, 5),  # Use Steam to avoid PC conflict
+    ]
+
+    with SessionLocal() as db:
+        for i, (game_id, platform, acq_type, priority) in enumerate(test_items):
+            item = CollectionItem(
+                id=f"col_agg_test_{i}",
+                user_id="user1",
+                game_id=game_id,
+                platform=platform,
+                acquisition_type=acq_type.value,
+                priority=priority,
+                is_active=True,
+                created_at=datetime(2023, 1, i + 20, tzinfo=timezone.utc),
+                updated_at=datetime(2023, 1, i + 20, tzinfo=timezone.utc),
+            )
+            db.add(item)
+        db.commit()
+
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Total should be original 3 + 4 new = 7
+    assert data["total_games"] == 7
+
+    # Platform verification
+    expected_platforms = {
+        "PC": 2,  # original col1, col3
+        "PS5": 1,  # original col2
+        "PS4": 2,  # two new PS4 items
+        "Xbox": 1,  # one new Xbox item
+        "Steam": 1,  # one new Steam item
+    }
+    for platform, expected_count in expected_platforms.items():
+        assert (
+            data["by_platform"][platform] == expected_count
+        ), f"Platform {platform} count mismatch"
+
+    # Acquisition type verification
+    expected_acquisition = {
+        "DIGITAL": 3,  # original col1, col3 + new PS4 digital
+        "PHYSICAL": 2,  # original col2 + new PS4 physical
+        "SUBSCRIPTION": 1,  # new Xbox item
+        "RENTAL": 1,  # new Steam item
+    }
+    for acq_type, expected_count in expected_acquisition.items():
+        assert (
+            data["by_acquisition_type"][acq_type] == expected_count
+        ), f"Acquisition type {acq_type} count mismatch"
+
+    # Priority verification
+    expected_priorities = {
+        "1": 2,  # original col1 + new PS4 physical
+        "2": 2,  # original col2 + new PS4 digital
+        "3": 1,  # original col3
+        "5": 1,  # new Steam item
+        "null": 1,  # new Xbox item
+    }
+    for priority, expected_count in expected_priorities.items():
+        assert (
+            data["by_priority"][priority] == expected_count
+        ), f"Priority {priority} count mismatch"
+
+
+def test_collection_stats_all_fields_present(test_data):
+    """Test that response includes all expected fields."""
+    response = client.get("/api/v1/collection/stats", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Required fields
+    required_fields = [
+        "total_games",
+        "by_platform",
+        "by_acquisition_type",
+        "by_priority",
+    ]
+    for field in required_fields:
+        assert field in data, f"Missing required field: {field}"
+
+    # Optional fields that should be present
+    optional_fields = ["value_estimate", "recent_additions"]
+    for field in optional_fields:
+        # These may be None/empty but should be present in response
+        assert field in data, f"Missing optional field: {field}"

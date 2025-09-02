@@ -273,113 +273,6 @@ async def create_collection_item(
     )
 
 
-@router.put("/{collection_id}", response_model=CollectionItemExpanded)
-async def update_collection_item(
-    collection_id: str,
-    update_data: CollectionItemUpdate,
-    current_user: CurrentUser = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> CollectionItemExpanded:
-    """Update mutable fields of a collection item for the authenticated user."""
-    
-    # First, get the existing collection item with game data
-    query = (
-        select(CollectionItem, Game)
-        .join(Game, CollectionItem.game_id == Game.id)
-        .where(
-            and_(
-                CollectionItem.id == collection_id,
-                CollectionItem.user_id == current_user.id
-            )
-        )
-    )
-    
-    result = db.execute(query).first()
-    if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Collection item not found"
-        )
-    
-    collection_item, game = result
-    
-    # Update only the fields that are provided (not None)
-    update_values = {}
-    if update_data.acquisition_type is not None:
-        update_values["acquisition_type"] = update_data.acquisition_type.value
-    if update_data.acquired_at is not None:
-        update_values["acquired_at"] = update_data.acquired_at
-    if update_data.priority is not None:
-        update_values["priority"] = update_data.priority
-    if update_data.is_active is not None:
-        update_values["is_active"] = update_data.is_active
-    if update_data.notes is not None:
-        update_values["notes"] = update_data.notes
-    
-    # If there are no updates, just return the current item
-    if not update_values:
-        # Still need to get playthroughs and build response
-        pass
-    else:
-        # Update the timestamp
-        update_values["updated_at"] = datetime.now(timezone.utc)
-        
-        # Apply the updates
-        for field, value in update_values.items():
-            setattr(collection_item, field, value)
-        
-        db.commit()
-        db.refresh(collection_item)
-    
-    # Get playthroughs for this collection item
-    playthroughs_query = select(Playthrough).where(
-        Playthrough.collection_id == collection_item.id
-    )
-    playthroughs = db.scalars(playthroughs_query).all()
-    
-    # Convert to response model
-    game_detail = GameDetail(
-        id=game.id,
-        title=game.title,
-        cover_image_id=game.cover_image_id,
-        release_date=game.release_date,
-        description=game.description,
-        igdb_id=game.igdb_id,
-        hltb_id=game.hltb_id,
-        steam_app_id=game.steam_app_id,
-    )
-    
-    # Convert playthroughs to dict format
-    playthrough_dicts = []
-    for pt in playthroughs:
-        playthrough_dicts.append(
-            {
-                "id": pt.id,
-                "status": pt.status,
-                "platform": pt.platform,
-                "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
-                "play_time_hours": pt.play_time_hours,
-                "rating": pt.rating,
-            }
-        )
-    
-    return CollectionItemExpanded(
-        id=collection_item.id,
-        user_id=collection_item.user_id,
-        game=game_detail,
-        platform=collection_item.platform,
-        acquisition_type=AcquisitionType(collection_item.acquisition_type),
-        acquired_at=collection_item.acquired_at,
-        priority=collection_item.priority,
-        is_active=collection_item.is_active,
-        notes=collection_item.notes,
-        playthroughs=playthrough_dicts,
-        created_at=collection_item.created_at,
-        updated_at=collection_item.updated_at,
-    )
-
-
 @router.get("/{collection_id}", response_model=CollectionItemExpanded)
 async def get_collection_item(
     collection_id: str,
@@ -467,7 +360,7 @@ async def update_collection_item(
     db: Session = Depends(get_db),
 ) -> CollectionItemExpanded:
     """Update mutable fields of a collection item for the authenticated user."""
-    
+
     # First, get the existing collection item with game data
     query = (
         select(CollectionItem, Game)
@@ -475,20 +368,19 @@ async def update_collection_item(
         .where(
             and_(
                 CollectionItem.id == collection_id,
-                CollectionItem.user_id == current_user.id
+                CollectionItem.user_id == current_user.id,
             )
         )
     )
-    
+
     result = db.execute(query).first()
     if not result:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Collection item not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Collection item not found"
         )
-    
+
     collection_item, game = result
-    
+
     # Update only the fields that are provided (not None)
     update_values = {}
     if update_data.acquisition_type is not None:
@@ -501,7 +393,7 @@ async def update_collection_item(
         update_values["is_active"] = update_data.is_active
     if update_data.notes is not None:
         update_values["notes"] = update_data.notes
-    
+
     # If there are no updates, just return the current item
     if not update_values:
         # Still need to get playthroughs and build response
@@ -509,20 +401,20 @@ async def update_collection_item(
     else:
         # Update the timestamp
         update_values["updated_at"] = datetime.now(timezone.utc)
-        
+
         # Apply the updates
         for field, value in update_values.items():
             setattr(collection_item, field, value)
-        
+
         db.commit()
         db.refresh(collection_item)
-    
+
     # Get playthroughs for this collection item
     playthroughs_query = select(Playthrough).where(
         Playthrough.collection_id == collection_item.id
     )
     playthroughs = db.scalars(playthroughs_query).all()
-    
+
     # Convert to response model
     game_detail = GameDetail(
         id=game.id,
@@ -534,7 +426,7 @@ async def update_collection_item(
         hltb_id=game.hltb_id,
         steam_app_id=game.steam_app_id,
     )
-    
+
     # Convert playthroughs to dict format
     playthrough_dicts = []
     for pt in playthroughs:
@@ -544,12 +436,14 @@ async def update_collection_item(
                 "status": pt.status,
                 "platform": pt.platform,
                 "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                "completed_at": pt.completed_at.isoformat() if pt.completed_at else None,
+                "completed_at": pt.completed_at.isoformat()
+                if pt.completed_at
+                else None,
                 "play_time_hours": pt.play_time_hours,
                 "rating": pt.rating,
             }
         )
-    
+
     return CollectionItemExpanded(
         id=collection_item.id,
         user_id=collection_item.user_id,
@@ -564,3 +458,58 @@ async def update_collection_item(
         created_at=collection_item.created_at,
         updated_at=collection_item.updated_at,
     )
+
+
+@router.delete("/{collection_id}")
+async def delete_collection_item(
+    collection_id: str,
+    hard_delete: bool = Query(False, description="Permanently delete the item"),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Delete a collection item (soft delete by default, hard delete with safeguards)."""
+
+    # Find the collection item
+    query = select(CollectionItem).where(
+        and_(
+            CollectionItem.id == collection_id,
+            CollectionItem.user_id == current_user.id,
+        )
+    )
+
+    collection_item = db.scalar(query)
+    if not collection_item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Collection item not found"
+        )
+
+    if hard_delete:
+        # Check for associated playthroughs before hard delete
+        playthroughs_query = select(func.count(Playthrough.id)).where(
+            Playthrough.collection_id == collection_item.id
+        )
+        playthrough_count = db.scalar(playthroughs_query)
+
+        if playthrough_count > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot hard delete: collection item has associated playthroughs",
+            )
+
+        # Perform hard delete
+        db.delete(collection_item)
+        db.commit()
+
+        return {"message": "Collection item permanently deleted", "id": collection_id}
+    else:
+        # Perform soft delete
+        collection_item.is_active = False
+        collection_item.updated_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(collection_item)
+
+        return {
+            "message": "Collection item soft deleted",
+            "id": collection_id,
+            "is_active": collection_item.is_active,
+        }

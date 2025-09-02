@@ -81,7 +81,7 @@
 - Validate: 200; 422 on invalid priority; immutable fields rejected.
 - Commit: `feat(api): update collection item`
 
-### Task 12 – DELETE /collection/{id}
+### [x] Task 12 – DELETE /collection/{id}
 - Soft delete by default; optional hard delete flag with safeguards.
 - Validate: 200; is_active=false on soft; 404 not owned.
 - Commit: `feat(api): delete collection item (soft/hard)`

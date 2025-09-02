@@ -811,10 +811,7 @@ def test_get_collection_item_all_fields_present(test_data):
 
 def test_update_collection_item_requires_auth():
     """Test that collection update endpoint requires authentication."""
-    response = client.put(
-        "/api/v1/collection/col1",
-        json={"priority": 3}
-    )
+    response = client.put("/api/v1/collection/col1", json={"priority": 3})
     assert response.status_code == 401
     assert response.json()["error"] == "authentication_required"
 
@@ -825,16 +822,14 @@ def test_update_collection_item_success(test_data):
         "acquisition_type": "PHYSICAL",
         "priority": 3,
         "notes": "Updated notes",
-        "is_active": False
+        "is_active": False,
     }
-    
+
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json=update_data
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json=update_data
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col1"
     assert data["user_id"] == "user1"
@@ -842,11 +837,11 @@ def test_update_collection_item_success(test_data):
     assert data["priority"] == 3  # Updated
     assert data["notes"] == "Updated notes"  # Updated
     assert data["is_active"] is False  # Updated
-    
+
     # Immutable fields should remain unchanged
     assert data["game"]["id"] == "game1"
     assert data["platform"] == "PC"
-    
+
     # Check that updated_at was updated
     assert "updated_at" in data
 
@@ -856,14 +851,14 @@ def test_update_collection_item_partial_update(test_data):
     response = client.put(
         "/api/v1/collection/col2",
         headers={"X-User-Id": "user1"},
-        json={"priority": 1}  # Only update priority
+        json={"priority": 1},  # Only update priority
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col2"
     assert data["priority"] == 1  # Updated
-    
+
     # Other fields should remain unchanged
     assert data["acquisition_type"] == "PHYSICAL"  # Original value
     assert data["notes"] == "Souls-like masterpiece"  # Original value
@@ -875,10 +870,10 @@ def test_update_collection_item_no_changes(test_data):
     response = client.put(
         "/api/v1/collection/col1",
         headers={"X-User-Id": "user1"},
-        json={}  # No fields to update
+        json={},  # No fields to update
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["id"] == "col1"
     # Should return current values unchanged
@@ -893,10 +888,10 @@ def test_update_collection_item_acquired_at(test_data):
     response = client.put(
         "/api/v1/collection/col1",
         headers={"X-User-Id": "user1"},
-        json={"acquired_at": acquired_at}
+        json={"acquired_at": acquired_at},
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["acquired_at"] == acquired_at
 
@@ -904,12 +899,10 @@ def test_update_collection_item_acquired_at(test_data):
 def test_update_collection_item_notes_to_null(test_data):
     """Test setting notes to empty/null."""
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json={"notes": ""}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"notes": ""}
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["notes"] == ""
 
@@ -919,7 +912,7 @@ def test_update_collection_item_not_found(test_data):
     response = client.put(
         "/api/v1/collection/nonexistent",
         headers={"X-User-Id": "user1"},
-        json={"priority": 2}
+        json={"priority": 2},
     )
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
@@ -930,7 +923,7 @@ def test_update_collection_item_wrong_user(test_data):
     response = client.put(
         "/api/v1/collection/col1",  # user1's item
         headers={"X-User-Id": "user2"},  # accessed by user2
-        json={"priority": 5}
+        json={"priority": 5},
     )
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
@@ -940,17 +933,13 @@ def test_update_collection_item_invalid_priority(test_data):
     """Test validation of priority field."""
     # Priority too low
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json={"priority": 0}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 0}
     )
     assert response.status_code == 422
-    
+
     # Priority too high
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json={"priority": 6}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 6}
     )
     assert response.status_code == 422
 
@@ -960,7 +949,7 @@ def test_update_collection_item_invalid_acquisition_type(test_data):
     response = client.put(
         "/api/v1/collection/col1",
         headers={"X-User-Id": "user1"},
-        json={"acquisition_type": "INVALID_TYPE"}
+        json={"acquisition_type": "INVALID_TYPE"},
     )
     assert response.status_code == 422
 
@@ -968,15 +957,15 @@ def test_update_collection_item_invalid_acquisition_type(test_data):
 def test_update_collection_item_all_acquisition_types(test_data):
     """Test updating to all valid acquisition types."""
     acquisition_types = ["PHYSICAL", "DIGITAL", "SUBSCRIPTION", "BORROWED", "RENTAL"]
-    
+
     for acq_type in acquisition_types:
         response = client.put(
             "/api/v1/collection/col1",
             headers={"X-User-Id": "user1"},
-            json={"acquisition_type": acq_type}
+            json={"acquisition_type": acq_type},
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["acquisition_type"] == acq_type
 
@@ -984,12 +973,10 @@ def test_update_collection_item_all_acquisition_types(test_data):
 def test_update_collection_item_preserves_playthroughs(test_data):
     """Test that update preserves existing playthrough data."""
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json={"priority": 4}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 4}
     )
     assert response.status_code == 200
-    
+
     data = response.json()
     assert data["priority"] == 4  # Updated
     # Should still have the playthrough
@@ -1002,29 +989,23 @@ def test_update_collection_item_user_isolation(test_data):
     """Test proper user isolation during updates."""
     # User1 can update their own items
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user1"},
-        json={"priority": 2}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 2}
     )
     assert response.status_code == 200
     assert response.json()["user_id"] == "user1"
     assert response.json()["priority"] == 2
-    
+
     # User2 can update their own items
     response = client.put(
-        "/api/v1/collection/col4",
-        headers={"X-User-Id": "user2"},
-        json={"priority": 3}
+        "/api/v1/collection/col4", headers={"X-User-Id": "user2"}, json={"priority": 3}
     )
     assert response.status_code == 200
     assert response.json()["user_id"] == "user2"
     assert response.json()["priority"] == 3
-    
+
     # But user2 cannot update user1's items
     response = client.put(
-        "/api/v1/collection/col1",
-        headers={"X-User-Id": "user2"},
-        json={"priority": 5}
+        "/api/v1/collection/col1", headers={"X-User-Id": "user2"}, json={"priority": 5}
     )
     assert response.status_code == 404
 
@@ -1034,21 +1015,201 @@ def test_update_collection_item_all_fields_present(test_data):
     response = client.put(
         "/api/v1/collection/col1",
         headers={"X-User-Id": "user1"},
-        json={"priority": 5, "notes": "Updated"}
+        json={"priority": 5, "notes": "Updated"},
     )
     assert response.status_code == 200
-    
+
     data = response.json()
-    
+
     # Collection item fields
     required_fields = [
-        "id", "user_id", "platform", "acquisition_type", "is_active", 
-        "created_at", "updated_at", "game", "playthroughs"
+        "id",
+        "user_id",
+        "platform",
+        "acquisition_type",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "game",
+        "playthroughs",
     ]
     for field in required_fields:
         assert field in data, f"Missing required field: {field}"
-    
+
     # Optional fields
     optional_fields = ["acquired_at", "priority", "notes"]
     for field in optional_fields:
         assert field in data, f"Missing optional field: {field}"
+
+
+# ===== DELETE /collection/{id} tests =====
+
+
+def test_delete_collection_item_requires_auth():
+    """Test that collection delete endpoint requires authentication."""
+    response = client.delete("/api/v1/collection/col1")
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_delete_collection_item_soft_delete_success(test_data):
+    """Test successful soft delete of collection item."""
+    # Verify item exists and is active before deletion (use col2 which is active)
+    response = client.get("/api/v1/collection/col2", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["is_active"] is True
+
+    # Perform soft delete (default behavior)
+    response = client.delete("/api/v1/collection/col2", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["message"] == "Collection item soft deleted"
+    assert data["id"] == "col2"
+    assert data["is_active"] is False  # Should be set to false
+
+    # Verify item still exists but is inactive when fetched
+    response = client.get("/api/v1/collection/col2", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+
+
+def test_delete_collection_item_hard_delete_success(test_data):
+    """Test successful hard delete of collection item."""
+    # Verify item exists before deletion (use col3 which has no playthroughs)
+    response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    # Perform hard delete
+    response = client.delete(
+        "/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["message"] == "Collection item permanently deleted"
+    assert data["id"] == "col3"
+
+    # Verify item no longer exists
+    response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
+    assert response.status_code == 404
+
+
+def test_delete_collection_item_not_found(test_data):
+    """Test 404 when collection item doesn't exist."""
+    response = client.delete(
+        "/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_delete_collection_item_wrong_user(test_data):
+    """Test that users can't delete other users' collection items."""
+    response = client.delete(
+        "/api/v1/collection/col1",  # user1's item
+        headers={"X-User-Id": "user2"},  # accessed by user2
+    )
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_delete_collection_item_hard_delete_with_playthroughs_fails(test_data):
+    """Test that hard delete fails when collection item has associated playthroughs."""
+    # col1 has a playthrough (pt1), so hard delete should fail
+    response = client.delete(
+        "/api/v1/collection/col1?hard_delete=true", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 409
+    assert (
+        "Cannot hard delete: collection item has associated playthroughs"
+        in response.json()["message"]
+    )
+
+    # Verify item still exists
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["is_active"] is True
+
+
+def test_delete_collection_item_soft_delete_with_playthroughs_succeeds(test_data):
+    """Test that soft delete succeeds even when collection item has associated playthroughs."""
+    # col1 has a playthrough (pt1), but soft delete should succeed
+    response = client.delete("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["message"] == "Collection item soft deleted"
+    assert data["id"] == "col1"
+    assert data["is_active"] is False
+
+    # Verify item still exists but is inactive
+    response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+    # Playthroughs should still be accessible
+    assert len(response.json()["playthroughs"]) == 1
+
+
+def test_delete_collection_item_already_soft_deleted(test_data):
+    """Test deleting an already soft-deleted item."""
+    # First soft delete (use col1 since col2 and col3 are used by other tests)
+    response = client.delete("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+
+    # Try to delete again
+    response = client.delete("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+    assert response.json()["message"] == "Collection item soft deleted"
+    assert response.json()["is_active"] is False
+
+
+def test_delete_collection_item_hard_delete_no_playthroughs(test_data):
+    """Test hard delete succeeds when no associated playthroughs exist."""
+    # col3 has no playthroughs, so hard delete should work
+    response = client.delete(
+        "/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["message"] == "Collection item permanently deleted"
+    assert data["id"] == "col3"
+
+    # Verify item no longer exists
+    response = client.get("/api/v1/collection/col3", headers={"X-User-Id": "user1"})
+    assert response.status_code == 404
+
+
+def test_delete_collection_item_user_isolation(test_data):
+    """Test proper user isolation during deletions."""
+    # User1 can delete their own items
+    response = client.delete("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
+    assert response.status_code == 200
+
+    # User2 can delete their own items
+    response = client.delete("/api/v1/collection/col4", headers={"X-User-Id": "user2"})
+    assert response.status_code == 200
+
+    # But user2 cannot delete user1's remaining items
+    response = client.delete("/api/v1/collection/col2", headers={"X-User-Id": "user2"})
+    assert response.status_code == 404
+
+
+def test_delete_collection_item_query_param_variations(test_data):
+    """Test different query parameter formats for hard_delete."""
+    # Test hard_delete=false (explicit soft delete)
+    response = client.delete(
+        "/api/v1/collection/col2?hard_delete=false", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Collection item soft deleted"
+    assert response.json()["is_active"] is False
+
+    # Test hard_delete=True (case insensitive)
+    response = client.delete(
+        "/api/v1/collection/col3?hard_delete=True", headers={"X-User-Id": "user1"}
+    )
+    assert response.status_code == 200
+    assert response.json()["message"] == "Collection item permanently deleted"

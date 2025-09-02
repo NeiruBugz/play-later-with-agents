@@ -93,9 +93,15 @@ class CollectionItemCreate(BaseModel):
 
 
 class CollectionItemUpdate(BaseModel):
-    acquisition_type: Optional[AcquisitionType] = Field(None, description="How the game was acquired")
-    acquired_at: Optional[datetime] = Field(None, description="When the game was acquired")
-    priority: Optional[int] = Field(None, ge=1, le=5, description="Priority level (1-5)")
+    acquisition_type: Optional[AcquisitionType] = Field(
+        None, description="How the game was acquired"
+    )
+    acquired_at: Optional[datetime] = Field(
+        None, description="When the game was acquired"
+    )
+    priority: Optional[int] = Field(
+        None, ge=1, le=5, description="Priority level (1-5)"
+    )
     is_active: Optional[bool] = Field(None, description="Whether the item is active")
     notes: Optional[str] = Field(None, description="Personal notes about the game")
 

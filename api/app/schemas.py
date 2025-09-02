@@ -254,3 +254,35 @@ class CompletedResponse(BaseModel):
     items: list[CompletedItem]
     total_count: int
     completion_stats: Optional[dict[str, float | int | str]] = None
+
+
+# ===== Bulk Operations =====
+
+
+class BulkCollectionAction(str, Enum):
+    UPDATE_PRIORITY = "update_priority"
+    UPDATE_PLATFORM = "update_platform"
+    HIDE = "hide"
+    ACTIVATE = "activate"
+
+
+class BulkCollectionRequest(BaseModel):
+    action: BulkCollectionAction = Field(..., description="The action to perform")
+    collection_ids: list[str] = Field(
+        ..., min_length=1, description="Collection item IDs to update"
+    )
+    data: Optional[dict] = Field(None, description="Action-specific data")
+
+
+class BulkCollectionResult(BaseModel):
+    id: str
+    success: bool
+    error: Optional[str] = None
+    updated_data: Optional[dict] = None
+
+
+class BulkCollectionResponse(BaseModel):
+    success: bool
+    updated_count: int
+    total_count: int
+    results: list[BulkCollectionResult]

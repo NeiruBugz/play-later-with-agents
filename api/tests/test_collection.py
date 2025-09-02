@@ -1213,3 +1213,364 @@ def test_delete_collection_item_query_param_variations(test_data):
     )
     assert response.status_code == 200
     assert response.json()["message"] == "Collection item permanently deleted"
+
+
+# ===== POST /collection/bulk tests =====
+
+
+def test_bulk_collection_operations_requires_auth():
+    """Test that bulk operations endpoint requires authentication."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1", "col2"],
+            "data": {"priority": 1},
+        },
+    )
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_bulk_update_priority_all_success(test_data):
+    """Test bulk priority update when all operations succeed."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1", "col2"],
+            "data": {"priority": 5},
+        },
+    )
+    assert response.status_code == 200  # All operations successful
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+    assert data["total_count"] == 2
+    assert len(data["results"]) == 2
+
+    # Check each result
+    for result in data["results"]:
+        assert result["success"] is True
+        assert result["error"] is None
+        assert result["updated_data"]["priority"] == 5
+        assert result["id"] in ["col1", "col2"]
+
+
+def test_bulk_update_priority_partial_success(test_data):
+    """Test bulk priority update with partial success (some items not found)."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1", "nonexistent", "col2"],
+            "data": {"priority": 3},
+        },
+    )
+    assert response.status_code == 207  # Multi-Status for partial success
+
+    data = response.json()
+    assert data["success"] is False  # Not all successful
+    assert data["updated_count"] == 2  # Only col1 and col2 updated
+    assert data["total_count"] == 3  # 3 items attempted
+    assert len(data["results"]) == 3
+
+    # Check successful results
+    successful_results = [r for r in data["results"] if r["success"]]
+    failed_results = [r for r in data["results"] if not r["success"]]
+
+    assert len(successful_results) == 2
+    assert len(failed_results) == 1
+
+    # Failed result should be the nonexistent one
+    failed_result = failed_results[0]
+    assert failed_result["id"] == "nonexistent"
+    assert "not found" in failed_result["error"].lower()
+
+
+def test_bulk_update_platform_all_success(test_data):
+    """Test bulk platform update when all operations succeed."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_platform",
+            "collection_ids": [
+                "col1",
+                "col3",
+            ],  # col3 is inactive but should still be updatable
+            "data": {"platform": "Xbox"},
+        },
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+    assert data["total_count"] == 2
+
+    # Verify the updates by getting the items
+    for col_id in ["col1", "col3"]:
+        response = client.get(
+            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
+        )
+        assert response.status_code == 200
+        assert response.json()["platform"] == "Xbox"
+
+
+def test_bulk_hide_all_success(test_data):
+    """Test bulk hide (soft delete) operation when all succeed."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={"action": "hide", "collection_ids": ["col1", "col2"]},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+    assert data["total_count"] == 2
+
+    # Verify items are hidden
+    for col_id in ["col1", "col2"]:
+        response = client.get(
+            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
+        )
+        assert response.status_code == 200
+        assert response.json()["is_active"] is False
+
+
+def test_bulk_activate_all_success(test_data):
+    """Test bulk activate operation when all succeed."""
+    # First hide col1 and col2
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={"action": "hide", "collection_ids": ["col1", "col2"]},
+    )
+    assert response.status_code == 200
+
+    # Now activate them back
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "activate",
+            "collection_ids": ["col1", "col2", "col3"],  # col3 was already inactive
+        },
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 3
+    assert data["total_count"] == 3
+
+    # Verify items are active
+    for col_id in ["col1", "col2", "col3"]:
+        response = client.get(
+            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
+        )
+        assert response.status_code == 200
+        assert response.json()["is_active"] is True
+
+
+def test_bulk_operations_user_isolation(test_data):
+    """Test that users can only perform bulk operations on their own items."""
+    # user1 tries to update user2's item (col4) along with their own
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1", "col4"],  # col4 belongs to user2
+            "data": {"priority": 2},
+        },
+    )
+    assert response.status_code == 207  # Partial success
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 1  # Only col1 updated
+    assert data["total_count"] == 2
+
+    # Check that col4 was not found/updated
+    failed_results = [r for r in data["results"] if not r["success"]]
+    assert len(failed_results) == 1
+    assert failed_results[0]["id"] == "col4"
+
+
+def test_bulk_operations_empty_collection_ids(test_data):
+    """Test validation when collection_ids is empty."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": [],
+            "data": {"priority": 2},
+        },
+    )
+    assert response.status_code == 422  # Validation error
+
+
+def test_bulk_operations_invalid_action(test_data):
+    """Test validation with invalid action."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "invalid_action",
+            "collection_ids": ["col1"],
+            "data": {"priority": 2},
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_bulk_update_priority_invalid_data(test_data):
+    """Test validation when priority data is invalid."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1"],
+            "data": {"priority": 10},  # Invalid priority (must be 1-5)
+        },
+    )
+    assert response.status_code == 207  # Partial success - validation happens per item
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 0
+    assert data["total_count"] == 1
+
+    failed_result = data["results"][0]
+    assert failed_result["success"] is False
+    assert "priority" in failed_result["error"].lower()
+
+
+def test_bulk_update_priority_missing_data(test_data):
+    """Test when required data is missing for update_priority."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["col1"],
+            "data": {},  # Missing priority
+        },
+    )
+    assert response.status_code == 400  # Bad request for missing required data
+
+
+def test_bulk_update_platform_missing_data(test_data):
+    """Test when required data is missing for update_platform."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_platform",
+            "collection_ids": ["col1"],
+            "data": {},  # Missing platform
+        },
+    )
+    assert response.status_code == 400  # Bad request for missing required data
+
+
+def test_bulk_hide_activate_no_data_required(test_data):
+    """Test that hide and activate actions don't require data parameter."""
+    # Hide should work without data
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={"action": "hide", "collection_ids": ["col1"]},
+    )
+    assert response.status_code == 200
+
+    # Activate should work without data
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={"action": "activate", "collection_ids": ["col1"]},
+    )
+    assert response.status_code == 200
+
+
+def test_bulk_operations_all_not_found(test_data):
+    """Test when all collection IDs are not found or not owned."""
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": ["nonexistent1", "nonexistent2"],
+            "data": {"priority": 3},
+        },
+    )
+    assert response.status_code == 207  # Multi-status
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 0
+    assert data["total_count"] == 2
+    assert len(data["results"]) == 2
+
+    # All results should be failures
+    for result in data["results"]:
+        assert result["success"] is False
+        assert "not found" in result["error"].lower()
+
+
+def test_bulk_operations_large_batch(test_data):
+    """Test bulk operations with many items (test performance/batching)."""
+    # Create additional test items for user1
+    from app.db_models import CollectionItem
+    from app.schemas import AcquisitionType
+    from app.db import SessionLocal
+
+    with SessionLocal() as db:
+        # Create additional collection items
+        additional_items = []
+        for i in range(
+            4, 8
+        ):  # col4-col7 (col4 is used by user2, so let's use col5-col8)
+            col_id = f"col{i+1}"
+            item = CollectionItem(
+                id=col_id,
+                user_id="user1",
+                game_id="game1",  # Reuse existing game
+                platform=f"Platform{i}",
+                acquisition_type=AcquisitionType.DIGITAL.value,
+                priority=i % 5 + 1,
+                is_active=True,
+                created_at=datetime(2023, 1, i, tzinfo=timezone.utc),
+                updated_at=datetime(2023, 1, i, tzinfo=timezone.utc),
+            )
+            additional_items.append(item)
+            db.add(item)
+        db.commit()
+
+    # Now test bulk operation with many IDs
+    all_col_ids = ["col1", "col2", "col3", "col5", "col6", "col7", "col8"]
+    response = client.post(
+        "/api/v1/collection/bulk",
+        headers={"X-User-Id": "user1"},
+        json={
+            "action": "update_priority",
+            "collection_ids": all_col_ids,
+            "data": {"priority": 4},
+        },
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 7
+    assert data["total_count"] == 7
+    assert len(data["results"]) == 7

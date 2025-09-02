@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, Response, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, asc, func, select
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +21,10 @@ from app.schemas import (
     AcquisitionType,
     GameDetail,
     CollectionSnippet,
+    BulkCollectionRequest,
+    BulkCollectionResponse,
+    BulkCollectionResult,
+    BulkCollectionAction,
 )
 
 router = APIRouter(prefix="/collection", tags=["collection"])
@@ -513,3 +517,142 @@ async def delete_collection_item(
             "id": collection_id,
             "is_active": collection_item.is_active,
         }
+
+
+@router.post("/bulk", response_model=BulkCollectionResponse)
+async def bulk_collection_operations(
+    request: BulkCollectionRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BulkCollectionResponse:
+    """Perform bulk operations on multiple collection items."""
+
+    # Validate required data for each action
+    if request.action == BulkCollectionAction.UPDATE_PRIORITY:
+        if not request.data or "priority" not in request.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Priority data is required for update_priority action",
+            )
+    elif request.action == BulkCollectionAction.UPDATE_PLATFORM:
+        if not request.data or "platform" not in request.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Platform data is required for update_platform action",
+            )
+    # HIDE and ACTIVATE actions don't require data
+
+    results = []
+    updated_count = 0
+
+    for collection_id in request.collection_ids:
+        try:
+            # Find the collection item belonging to the current user
+            query = select(CollectionItem).where(
+                and_(
+                    CollectionItem.id == collection_id,
+                    CollectionItem.user_id == current_user.id,
+                )
+            )
+            collection_item = db.scalar(query)
+
+            if not collection_item:
+                results.append(
+                    BulkCollectionResult(
+                        id=collection_id,
+                        success=False,
+                        error="Collection item not found or not owned by user",
+                    )
+                )
+                continue
+
+            # Perform the requested action
+            updated_data = {}
+
+            if request.action == BulkCollectionAction.UPDATE_PRIORITY:
+                priority = request.data["priority"]
+                # Validate priority range
+                if not isinstance(priority, int) or priority < 1 or priority > 5:
+                    results.append(
+                        BulkCollectionResult(
+                            id=collection_id,
+                            success=False,
+                            error="Priority must be between 1 and 5",
+                        )
+                    )
+                    continue
+
+                collection_item.priority = priority
+                updated_data["priority"] = priority
+
+            elif request.action == BulkCollectionAction.UPDATE_PLATFORM:
+                platform = request.data["platform"]
+                if not platform or not isinstance(platform, str):
+                    results.append(
+                        BulkCollectionResult(
+                            id=collection_id,
+                            success=False,
+                            error="Platform must be a non-empty string",
+                        )
+                    )
+                    continue
+
+                collection_item.platform = platform
+                updated_data["platform"] = platform
+
+            elif request.action == BulkCollectionAction.HIDE:
+                collection_item.is_active = False
+                updated_data["is_active"] = False
+
+            elif request.action == BulkCollectionAction.ACTIVATE:
+                collection_item.is_active = True
+                updated_data["is_active"] = True
+
+            # Update timestamp
+            collection_item.updated_at = datetime.now(timezone.utc)
+            updated_data["updated_at"] = collection_item.updated_at.isoformat()
+
+            # Commit the changes for this item
+            db.commit()
+            db.refresh(collection_item)
+
+            results.append(
+                BulkCollectionResult(
+                    id=collection_id,
+                    success=True,
+                    error=None,
+                    updated_data=updated_data,
+                )
+            )
+            updated_count += 1
+
+        except Exception as e:
+            db.rollback()
+            results.append(
+                BulkCollectionResult(id=collection_id, success=False, error=str(e))
+            )
+
+    # Determine response status
+    total_count = len(request.collection_ids)
+    all_successful = updated_count == total_count
+
+    response = BulkCollectionResponse(
+        success=all_successful,
+        updated_count=updated_count,
+        total_count=total_count,
+        results=results,
+    )
+
+    # Return appropriate status code
+    if all_successful:
+        return response  # 200 OK
+    else:
+        # Return 207 Multi-Status for partial success
+        # We need to manually set the status code to 207
+        # FastAPI doesn't have a direct way to return 207, so we'll use a custom response
+        content = response.model_dump_json()
+        return Response(
+            content=content,
+            status_code=207,
+            headers={"content-type": "application/json"},
+        )

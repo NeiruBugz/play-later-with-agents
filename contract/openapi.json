@@ -552,6 +552,82 @@
         }
       }
     },
+    "/api/v1/collection/bulk": {
+      "post": {
+        "tags": [
+          "collection"
+        ],
+        "summary": "Bulk Collection Operations",
+        "description": "Perform bulk operations on multiple collection items.",
+        "operationId": "bulk_collection_operations_api_v1_collection_bulk_post",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkCollectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -583,6 +659,124 @@
           "RENTAL"
         ],
         "title": "AcquisitionType"
+      },
+      "BulkCollectionAction": {
+        "type": "string",
+        "enum": [
+          "update_priority",
+          "update_platform",
+          "hide",
+          "activate"
+        ],
+        "title": "BulkCollectionAction"
+      },
+      "BulkCollectionRequest": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/BulkCollectionAction",
+            "description": "The action to perform"
+          },
+          "collection_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Collection Ids",
+            "description": "Collection item IDs to update"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Action-specific data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "collection_ids"
+        ],
+        "title": "BulkCollectionRequest"
+      },
+      "BulkCollectionResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "updated_count": {
+            "type": "integer",
+            "title": "Updated Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BulkCollectionResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "updated_count",
+          "total_count",
+          "results"
+        ],
+        "title": "BulkCollectionResponse"
+      },
+      "BulkCollectionResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "updated_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "success"
+        ],
+        "title": "BulkCollectionResult"
       },
       "CollectionItemCreate": {
         "properties": {

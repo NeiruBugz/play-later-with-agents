@@ -76,7 +76,7 @@
 - Validate: 200/404 cases.
 - Commit: `feat(api): add collection get by id`
 
-### Task 11 – PUT /collection/{id}
+### [x] Task 11 – PUT /collection/{id}
 - Update mutable fields only; enforce rules.
 - Validate: 200; 422 on invalid priority; immutable fields rejected.
 - Commit: `feat(api): update collection item`

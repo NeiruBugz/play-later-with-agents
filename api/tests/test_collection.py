@@ -804,3 +804,251 @@ def test_get_collection_item_all_fields_present(test_data):
     ]
     for field in game_fields:
         assert field in data["game"], f"Missing game field: {field}"
+
+
+# ===== PUT /collection/{id} tests =====
+
+
+def test_update_collection_item_requires_auth():
+    """Test that collection update endpoint requires authentication."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        json={"priority": 3}
+    )
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_update_collection_item_success(test_data):
+    """Test successful update of collection item."""
+    update_data = {
+        "acquisition_type": "PHYSICAL",
+        "priority": 3,
+        "notes": "Updated notes",
+        "is_active": False
+    }
+    
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json=update_data
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col1"
+    assert data["user_id"] == "user1"
+    assert data["acquisition_type"] == "PHYSICAL"  # Updated
+    assert data["priority"] == 3  # Updated
+    assert data["notes"] == "Updated notes"  # Updated
+    assert data["is_active"] is False  # Updated
+    
+    # Immutable fields should remain unchanged
+    assert data["game"]["id"] == "game1"
+    assert data["platform"] == "PC"
+    
+    # Check that updated_at was updated
+    assert "updated_at" in data
+
+
+def test_update_collection_item_partial_update(test_data):
+    """Test updating only some fields."""
+    response = client.put(
+        "/api/v1/collection/col2",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 1}  # Only update priority
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col2"
+    assert data["priority"] == 1  # Updated
+    
+    # Other fields should remain unchanged
+    assert data["acquisition_type"] == "PHYSICAL"  # Original value
+    assert data["notes"] == "Souls-like masterpiece"  # Original value
+    assert data["is_active"] is True  # Original value
+
+
+def test_update_collection_item_no_changes(test_data):
+    """Test update with no actual changes (all fields None or not provided)."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={}  # No fields to update
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["id"] == "col1"
+    # Should return current values unchanged
+    assert data["acquisition_type"] == "DIGITAL"
+    assert data["priority"] == 1
+    assert data["notes"] == "Great RPG"
+
+
+def test_update_collection_item_acquired_at(test_data):
+    """Test updating acquired_at timestamp."""
+    acquired_at = "2024-01-15T14:30:00Z"
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"acquired_at": acquired_at}
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["acquired_at"] == acquired_at
+
+
+def test_update_collection_item_notes_to_null(test_data):
+    """Test setting notes to empty/null."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"notes": ""}
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["notes"] == ""
+
+
+def test_update_collection_item_not_found(test_data):
+    """Test 404 when collection item doesn't exist."""
+    response = client.put(
+        "/api/v1/collection/nonexistent",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 2}
+    )
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_update_collection_item_wrong_user(test_data):
+    """Test that users can't update other users' collection items."""
+    response = client.put(
+        "/api/v1/collection/col1",  # user1's item
+        headers={"X-User-Id": "user2"},  # accessed by user2
+        json={"priority": 5}
+    )
+    assert response.status_code == 404
+    assert "Collection item not found" in response.json()["message"]
+
+
+def test_update_collection_item_invalid_priority(test_data):
+    """Test validation of priority field."""
+    # Priority too low
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 0}
+    )
+    assert response.status_code == 422
+    
+    # Priority too high
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 6}
+    )
+    assert response.status_code == 422
+
+
+def test_update_collection_item_invalid_acquisition_type(test_data):
+    """Test validation of acquisition_type enum."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"acquisition_type": "INVALID_TYPE"}
+    )
+    assert response.status_code == 422
+
+
+def test_update_collection_item_all_acquisition_types(test_data):
+    """Test updating to all valid acquisition types."""
+    acquisition_types = ["PHYSICAL", "DIGITAL", "SUBSCRIPTION", "BORROWED", "RENTAL"]
+    
+    for acq_type in acquisition_types:
+        response = client.put(
+            "/api/v1/collection/col1",
+            headers={"X-User-Id": "user1"},
+            json={"acquisition_type": acq_type}
+        )
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data["acquisition_type"] == acq_type
+
+
+def test_update_collection_item_preserves_playthroughs(test_data):
+    """Test that update preserves existing playthrough data."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 4}
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    assert data["priority"] == 4  # Updated
+    # Should still have the playthrough
+    assert len(data["playthroughs"]) == 1
+    assert data["playthroughs"][0]["id"] == "pt1"
+    assert data["playthroughs"][0]["status"] == "COMPLETED"
+
+
+def test_update_collection_item_user_isolation(test_data):
+    """Test proper user isolation during updates."""
+    # User1 can update their own items
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 2}
+    )
+    assert response.status_code == 200
+    assert response.json()["user_id"] == "user1"
+    assert response.json()["priority"] == 2
+    
+    # User2 can update their own items
+    response = client.put(
+        "/api/v1/collection/col4",
+        headers={"X-User-Id": "user2"},
+        json={"priority": 3}
+    )
+    assert response.status_code == 200
+    assert response.json()["user_id"] == "user2"
+    assert response.json()["priority"] == 3
+    
+    # But user2 cannot update user1's items
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user2"},
+        json={"priority": 5}
+    )
+    assert response.status_code == 404
+
+
+def test_update_collection_item_all_fields_present(test_data):
+    """Test that response includes all expected fields after update."""
+    response = client.put(
+        "/api/v1/collection/col1",
+        headers={"X-User-Id": "user1"},
+        json={"priority": 5, "notes": "Updated"}
+    )
+    assert response.status_code == 200
+    
+    data = response.json()
+    
+    # Collection item fields
+    required_fields = [
+        "id", "user_id", "platform", "acquisition_type", "is_active", 
+        "created_at", "updated_at", "game", "playthroughs"
+    ]
+    for field in required_fields:
+        assert field in data, f"Missing required field: {field}"
+    
+    # Optional fields
+    optional_fields = ["acquired_at", "priority", "notes"]
+    for field in optional_fields:
+        assert field in data, f"Missing optional field: {field}"

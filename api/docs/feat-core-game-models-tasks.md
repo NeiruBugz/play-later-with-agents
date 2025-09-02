@@ -86,12 +86,12 @@
 - Validate: 200; is_active=false on soft; 404 not owned.
 - Commit: `feat(api): delete collection item (soft/hard)`
 
-### Task 13 – POST /collection/bulk
+### [x] Task 13 – POST /collection/bulk
 - Implement supported actions with partial success (207) semantics.
 - Validate: mixed IDs return 207; all good returns 200.
 - Commit: `feat(api): bulk collection operations`
 
-### Task 14 – GET /collection/stats
+### [x] Task 14 – GET /collection/stats
 - Return counts by platform, acquisition, priority, value estimate.
 - Validate: deterministic aggregates in tests.
 - Commit: `feat(api): collection statistics endpoint`
@@ -181,7 +181,7 @@
 - Validate: spot-check major sections.
 - Commit: `docs(api): sync examples with implementation`
 
-### Task 32 – Update AGENTS.md
+### Task 32 – Update AGENTS.md, CLAUDE.md and GEMINI.md
 - Document the test-first workflow, per-task checklist, and generation steps.
 - Validate: content reflects the final process.
 - Commit: `docs: update AGENTS.md with testing and contract flow`

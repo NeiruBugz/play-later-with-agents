@@ -39,6 +39,8 @@ from app.schemas import (
     BacklogResponse,
     PlayingItem,
     PlayingResponse,
+    CompletedItem,
+    CompletedResponse,
 )
 
 import logging
@@ -574,6 +576,124 @@ async def get_playing(
     except Exception as e:
         logger.error(f"Error getting playing games for user {current_user.id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve playing games")
+
+
+@router.get("/completed", response_model=CompletedResponse)
+async def get_completed(
+    year: Optional[int] = Query(None, description="Filter by completion year"),
+    platform: Optional[str] = Query(None, description="Filter by platform"),
+    min_rating: Optional[int] = Query(
+        None, ge=1, le=10, description="Filter by minimum rating"
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CompletedResponse:
+    """Get user's completed games (completed status playthroughs) with filters and statistics."""
+    logger.info(f"Getting completed games for user {current_user.id}")
+
+    # Build query for completed playthroughs
+    query = (
+        db.query(Playthrough)
+        .filter(
+            Playthrough.user_id == current_user.id,
+            Playthrough.status == PlaythroughStatus.COMPLETED,
+        )
+        .join(Game, Playthrough.game_id == Game.id)
+    )
+
+    # Apply filters
+    if year is not None:
+        # Filter by completion year
+        query = query.filter(func.extract("year", Playthrough.completed_at) == year)
+
+    if platform is not None:
+        query = query.filter(Playthrough.platform == platform)
+
+    if min_rating is not None:
+        query = query.filter(Playthrough.rating >= min_rating)
+
+    # Order by completed_at descending (most recently completed first)
+    query = query.order_by(Playthrough.completed_at.desc())
+
+    try:
+        # Execute query with proper joins
+        results = query.all()
+
+        # Convert to response format
+        completed_items = []
+        for playthrough in results:
+            # Get the game from the join
+            game = db.query(Game).filter(Game.id == playthrough.game_id).first()
+            if not game:
+                continue
+
+            # Get game details
+            game_summary = GameSummary(
+                id=game.id,
+                title=game.title,
+                cover_image_id=game.cover_image_id,
+                release_date=game.release_date,
+                main_story=None,  # Not available in current Game model
+                main_extra=None,  # Not available in current Game model
+                completionist=None,  # Not available in current Game model
+            )
+
+            completed_item = CompletedItem(
+                id=playthrough.id,
+                game=game_summary,
+                status="COMPLETED",
+                platform=playthrough.platform,
+                completed_at=playthrough.completed_at,
+                play_time_hours=playthrough.play_time_hours,
+                rating=playthrough.rating,
+                playthrough_type=playthrough.playthrough_type,
+            )
+            completed_items.append(completed_item)
+
+        # Calculate completion statistics
+        completion_stats = {}
+        if completed_items:
+            completion_stats["total_completed"] = len(completed_items)
+
+            # Calculate average rating (only for items with ratings)
+            ratings = [
+                item.rating for item in completed_items if item.rating is not None
+            ]
+            if ratings:
+                completion_stats["average_rating"] = round(
+                    sum(ratings) / len(ratings), 2
+                )
+
+            # Calculate total and average play time (only for items with play time)
+            play_times = [
+                item.play_time_hours
+                for item in completed_items
+                if item.play_time_hours is not None
+            ]
+            if play_times:
+                total_time = sum(play_times)
+                completion_stats["total_play_time"] = round(total_time, 2)
+                completion_stats["average_play_time"] = round(
+                    total_time / len(play_times), 2
+                )
+        else:
+            completion_stats["total_completed"] = 0
+
+        logger.info(
+            f"Found {len(completed_items)} completed items for user {current_user.id}"
+        )
+
+        return CompletedResponse(
+            items=completed_items,
+            total_count=len(completed_items),
+            completion_stats=completion_stats,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting completed games for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve completed games"
+        )
 
 
 @router.get("/{playthrough_id}", response_model=PlaythroughDetail)

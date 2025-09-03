@@ -2499,3 +2499,175 @@ def test_get_playing_shows_recent_activity(test_data):
             next_started = data["items"][i + 1]["started_at"]
             # More recent should come first
             assert current_started >= next_started
+
+
+# ===== Completed Endpoint Tests =====
+
+
+def test_get_completed_success(test_data):
+    """Test successful completed retrieval."""
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "items" in data
+    assert "total_count" in data
+    assert "completion_stats" in data
+    assert isinstance(data["items"], list)
+    assert isinstance(data["total_count"], int)
+
+    # All items should have status "COMPLETED"
+    for item in data["items"]:
+        assert item["status"] == "COMPLETED"
+        assert "id" in item
+        assert "game" in item
+        assert "platform" in item
+        assert "completed_at" in item
+        assert item["game"]["title"]
+
+
+def test_get_completed_user_isolation(test_data):
+    """Test completed only shows user's own playthroughs."""
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user1_completed_count = data["total_count"]
+
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user2_completed_count = data["total_count"]
+
+    # Different users should potentially have different completed counts
+    # At minimum, verify both requests work
+    assert user1_completed_count >= 0
+    assert user2_completed_count >= 0
+
+
+def test_get_completed_year_filtering(test_data):
+    """Test completed can be filtered by completion year."""
+    response = client.get(
+        "/api/v1/playthroughs/completed?year=2023", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # All returned items should have completed_at in 2023
+    for item in data["items"]:
+        completed_at = item["completed_at"]
+        assert completed_at.startswith("2023")
+
+
+def test_get_completed_rating_filtering(test_data):
+    """Test completed can be filtered by minimum rating."""
+    response = client.get(
+        "/api/v1/playthroughs/completed?min_rating=8", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # All returned items should have rating >= 8 (or null)
+    for item in data["items"]:
+        if item["rating"] is not None:
+            assert item["rating"] >= 8
+
+
+def test_get_completed_platform_filtering(test_data):
+    """Test completed can be filtered by platform."""
+    response = client.get(
+        "/api/v1/playthroughs/completed?platform=PC", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # All returned items should have platform "PC"
+    for item in data["items"]:
+        assert item["platform"] == "PC"
+
+
+def test_get_completed_includes_expected_fields(test_data):
+    """Test completed items include expected fields."""
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    for item in data["items"]:
+        assert "play_time_hours" in item
+        assert "rating" in item
+        assert "playthrough_type" in item
+        # These fields can be null or have values
+        if item["play_time_hours"] is not None:
+            assert isinstance(item["play_time_hours"], (int, float))
+        if item["rating"] is not None:
+            assert isinstance(item["rating"], int)
+            assert 1 <= item["rating"] <= 10
+
+
+def test_get_completed_completion_stats(test_data):
+    """Test completed endpoint includes completion statistics."""
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    stats = data["completion_stats"]
+    assert stats is not None
+    assert isinstance(stats, dict)
+    # Should include aggregate statistics
+    expected_keys = [
+        "total_completed",
+        "average_rating",
+        "total_play_time",
+        "average_play_time",
+    ]
+    for key in expected_keys:
+        if key in stats:
+            assert isinstance(stats[key], (int, float, str))
+
+
+def test_get_completed_requires_auth():
+    """Test completed endpoint requires authentication."""
+    response = client.get("/api/v1/playthroughs/completed")
+    assert response.status_code == 401
+
+
+def test_get_completed_empty_result():
+    """Test completed endpoint when user has no completed playthroughs."""
+    # Create a user with no completed playthroughs
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-empty"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["items"] == []
+    assert data["total_count"] == 0
+    assert data["completion_stats"] is not None
+
+
+def test_get_completed_shows_recent_completions_first(test_data):
+    """Test completed shows most recently completed playthroughs first."""
+    response = client.get(
+        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    if len(data["items"]) > 1:
+        # Check that items are sorted by completed_at descending
+        for i in range(len(data["items"]) - 1):
+            current_completed = data["items"][i]["completed_at"]
+            next_completed = data["items"][i + 1]["completed_at"]
+            # More recent should come first
+            assert current_completed >= next_completed

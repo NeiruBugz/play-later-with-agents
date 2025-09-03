@@ -1139,6 +1139,81 @@
         }
       }
     },
+    "/api/v1/playthroughs/{playthrough_id}": {
+      "get": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Get Playthrough By Id",
+        "description": "Get a playthrough by ID with full details including embedded game, collection, and milestones.",
+        "operationId": "get_playthrough_by_id_api_v1_playthroughs__playthrough_id__get",
+        "parameters": [
+          {
+            "name": "playthrough_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Playthrough Id"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -1933,6 +2008,25 @@
         ],
         "title": "HealthResponse"
       },
+      "Milestone": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "achieved_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Achieved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "achieved_at"
+        ],
+        "title": "Milestone"
+      },
       "PlaythroughCreate": {
         "properties": {
           "game_id": {
@@ -2058,6 +2152,155 @@
           "platform"
         ],
         "title": "PlaythroughCreate"
+      },
+      "PlaythroughDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlaythroughStatus"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours"
+          },
+          "playthrough_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playthrough Type"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "game": {
+            "$ref": "#/components/schemas/GameDetail"
+          },
+          "collection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectionSnippet"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "milestones": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Milestone"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Milestones"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "status",
+          "platform",
+          "created_at",
+          "updated_at",
+          "game"
+        ],
+        "title": "PlaythroughDetail"
       },
       "PlaythroughListItem": {
         "properties": {

@@ -937,3 +937,210 @@ def test_create_playthrough_user_isolation(test_data):
 
     assert user1_count > 0
     assert user2_count > 0
+
+
+# ===== GET /playthroughs/{id} Tests =====
+
+
+def test_get_playthrough_requires_auth():
+    """Test that getting playthrough by ID requires authentication."""
+    response = client.get("/api/v1/playthroughs/pt-1")
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_get_playthrough_success_with_collection(test_data):
+    """Test getting playthrough by ID with collection item."""
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Verify playthrough details
+    assert data["id"] == "pt-1"
+    assert data["user_id"] == "user-1"
+    assert data["status"] == "COMPLETED"
+    assert data["platform"] == "PC"
+    assert data["rating"] == 9
+    assert data["play_time_hours"] == 120.5
+    assert data["difficulty"] == "Normal"
+    assert data["playthrough_type"] == "First Run"
+    assert data["notes"] == "Amazing story and world"
+
+    # Verify embedded game detail (more fields than GameSummary)
+    game = data["game"]
+    assert game["id"] == "game-1"
+    assert game["title"] == "The Witcher 3"
+    assert game["cover_image_id"] == "tw3_cover"
+    assert game["release_date"] == "2015-05-19"
+    # GameDetail should have additional fields
+    assert "description" in game
+    assert "igdb_id" in game
+    assert "hltb_id" in game
+    assert "steam_app_id" in game
+
+    # Verify embedded collection snippet
+    collection = data["collection"]
+    assert collection is not None
+    assert collection["id"] == "col-1"
+    assert collection["platform"] == "PC"
+    assert collection["acquisition_type"] == "DIGITAL"
+    assert collection["priority"] == 1
+    assert collection["is_active"] == True
+
+    # Verify timestamps are present
+    assert data["created_at"] is not None
+    assert data["updated_at"] is not None
+    assert data["started_at"] is not None
+    assert data["completed_at"] is not None
+
+
+def test_get_playthrough_success_without_collection(test_data):
+    """Test getting playthrough by ID without collection item."""
+    response = client.get("/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Verify playthrough details
+    assert data["id"] == "pt-3"
+    assert data["user_id"] == "user-1"
+    assert data["status"] == "PLANNING"
+    assert data["platform"] == "Steam"
+    assert data["playthrough_type"] == "100% Run"
+
+    # Verify embedded game detail
+    game = data["game"]
+    assert game["id"] == "game-3"
+    assert game["title"] == "Hollow Knight"
+
+    # Should not have collection since collection_id is None
+    assert data["collection"] is None
+
+    # Should have empty milestones list or None
+    milestones = data.get("milestones")
+    assert milestones is None or milestones == []
+
+
+def test_get_playthrough_success_with_milestones(test_data):
+    """Test getting playthrough with milestones if supported."""
+    # For now, milestones are likely empty/None since we haven't implemented milestone creation
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Milestones should be present in response structure even if empty
+    milestones = data.get("milestones")
+    assert milestones is None or isinstance(milestones, list)
+
+
+def test_get_playthrough_not_found(test_data):
+    """Test getting non-existent playthrough."""
+    response = client.get(
+        "/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_get_playthrough_user_isolation(test_data):
+    """Test that users cannot access other users' playthroughs."""
+    # Try to get user-1's playthrough as user-2
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-2"})
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+    # Try to get user-2's playthrough as user-1
+    response = client.get("/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+    # Verify user-2 can access their own playthrough
+    response = client.get("/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-2"})
+    assert response.status_code == 200
+    assert response.json()["id"] == "pt-6"
+    assert response.json()["user_id"] == "user-2"
+
+
+def test_get_playthrough_different_statuses(test_data):
+    """Test getting playthroughs in different statuses."""
+    # Test PLAYING status
+    response = client.get("/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "PLAYING"
+    assert data["completed_at"] is None  # Should not be completed
+    assert data["started_at"] is not None
+
+    # Test DROPPED status
+    response = client.get("/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "DROPPED"
+    assert data["play_time_hours"] == 5.0
+
+    # Test ON_HOLD status
+    response = client.get("/api/v1/playthroughs/pt-5", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ON_HOLD"
+    assert data["difficulty"] == "Death March"
+
+
+def test_get_playthrough_invalid_id_format(test_data):
+    """Test getting playthrough with invalid ID format."""
+    # Note: "/api/v1/playthroughs/" without ID matches the list endpoint, which is expected
+    # So we test with clearly invalid IDs instead
+
+    # Test with special characters that shouldn't exist in IDs
+    response = client.get(
+        "/api/v1/playthroughs/invalid/id/with/slashes", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404  # Should not match any route or should not exist
+
+    # Test with just spaces (URL encoded)
+    response = client.get(
+        "/api/v1/playthroughs/%20%20%20", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404  # Should not be found
+
+
+def test_get_playthrough_response_structure(test_data):
+    """Test that response has all required fields in correct structure."""
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    # Verify all PlaythroughBase fields are present
+    required_fields = [
+        "id",
+        "user_id",
+        "status",
+        "platform",
+        "created_at",
+        "updated_at",
+    ]
+    for field in required_fields:
+        assert field in data, f"Missing required field: {field}"
+
+    # Verify optional fields are present (even if None)
+    optional_fields = [
+        "started_at",
+        "completed_at",
+        "play_time_hours",
+        "playthrough_type",
+        "difficulty",
+        "rating",
+        "notes",
+    ]
+    for field in optional_fields:
+        assert field in data, f"Missing optional field: {field}"
+
+    # Verify embedded objects structure
+    assert "game" in data and isinstance(data["game"], dict)
+    assert "collection" in data  # Can be None or dict
+    assert "milestones" in data  # Can be None or list
+
+    # Verify game has detail fields beyond summary
+    game = data["game"]
+    game_detail_fields = ["description", "igdb_id", "hltb_id", "steam_app_id"]
+    for field in game_detail_fields:
+        assert field in game, f"Missing GameDetail field: {field}"

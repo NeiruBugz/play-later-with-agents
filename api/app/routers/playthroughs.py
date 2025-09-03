@@ -17,9 +17,11 @@ from app.schemas import (
     PlaythroughListItem,
     PlaythroughCreate,
     PlaythroughResponse,
+    PlaythroughDetail,
     PlaythroughSortBy,
     PlaythroughStatus,
     GameSummary,
+    GameDetail,
     CollectionSnippet,
     AcquisitionType,
     SortOrder,
@@ -385,3 +387,90 @@ async def create_playthrough(
         db.rollback()
         logger.error(f"Database error creating playthrough: {e}")
         raise HTTPException(status_code=500, detail="Failed to create playthrough")
+
+
+@router.get("/{playthrough_id}", response_model=PlaythroughDetail)
+async def get_playthrough_by_id(
+    playthrough_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughDetail:
+    """Get a playthrough by ID with full details including embedded game, collection, and milestones."""
+
+    logger.info(f"User {current_user.id} requesting playthrough {playthrough_id}")
+
+    # Query for the playthrough with joined game and collection data
+    query = (
+        select(Playthrough, Game, CollectionItem)
+        .join(Game, Playthrough.game_id == Game.id)
+        .outerjoin(CollectionItem, Playthrough.collection_id == CollectionItem.id)
+        .where(
+            and_(
+                Playthrough.id == playthrough_id, Playthrough.user_id == current_user.id
+            )
+        )
+    )
+
+    result = db.execute(query).first()
+
+    if not result:
+        logger.warning(
+            f"Playthrough {playthrough_id} not found for user {current_user.id}"
+        )
+        raise HTTPException(status_code=404, detail="Playthrough not found")
+
+    playthrough, game, collection_item = result
+
+    # Create game detail
+    game_detail = GameDetail(
+        id=game.id,
+        title=game.title,
+        cover_image_id=game.cover_image_id,
+        release_date=game.release_date,
+        main_story=getattr(game, "main_story", None),
+        main_extra=getattr(game, "main_extra", None),
+        completionist=getattr(game, "completionist", None),
+        description=getattr(game, "description", None),
+        igdb_id=getattr(game, "igdb_id", None),
+        hltb_id=getattr(game, "hltb_id", None),
+        steam_app_id=getattr(game, "steam_app_id", None),
+    )
+
+    # Create collection snippet if available
+    collection_snippet = None
+    if collection_item:
+        collection_snippet = CollectionSnippet(
+            id=collection_item.id,
+            platform=collection_item.platform,
+            acquisition_type=AcquisitionType(collection_item.acquisition_type),
+            acquired_at=collection_item.acquired_at,
+            priority=collection_item.priority,
+            is_active=collection_item.is_active,
+        )
+
+    # For now, milestones are not implemented, so return empty list
+    # TODO: Implement milestone retrieval when milestone system is added
+    milestones = None
+
+    # Create detailed playthrough response
+    playthrough_detail = PlaythroughDetail(
+        id=playthrough.id,
+        user_id=playthrough.user_id,
+        status=PlaythroughStatus(playthrough.status),
+        platform=playthrough.platform,
+        started_at=playthrough.started_at,
+        completed_at=playthrough.completed_at,
+        play_time_hours=playthrough.play_time_hours,
+        playthrough_type=playthrough.playthrough_type,
+        difficulty=playthrough.difficulty,
+        rating=playthrough.rating,
+        notes=playthrough.notes,
+        created_at=playthrough.created_at,
+        updated_at=playthrough.updated_at,
+        game=game_detail,
+        collection=collection_snippet,
+        milestones=milestones,
+    )
+
+    logger.info(f"Retrieved playthrough {playthrough_id} for user {current_user.id}")
+    return playthrough_detail

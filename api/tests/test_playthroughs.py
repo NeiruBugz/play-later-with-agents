@@ -1922,3 +1922,338 @@ def test_delete_playthrough_response_format(test_data):
     assert isinstance(data["success"], bool)
     assert isinstance(data["message"], str)
     assert data["success"] is True
+
+
+# ===== POST /playthroughs/bulk Tests =====
+
+
+def test_bulk_playthrough_requires_auth():
+    """Test that bulk operations require authentication."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-1", "pt-2"],
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data)
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_bulk_update_status_success(test_data):
+    """Test successfully updating status for multiple playthroughs."""
+    # Test valid transitions: PLAYING to ON_HOLD (pt-2) and PLANNING to PLAYING (pt-3)
+
+    # First, transition PLANNING playthrough to PLAYING
+    bulk_data_1 = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-3"],  # PLANNING
+        "data": {"status": "PLAYING"},
+    }
+
+    response1 = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data_1, headers={"X-User-Id": "user-1"}
+    )
+    assert response1.status_code == 200
+
+    # Now both pt-2 and pt-3 are PLAYING, so both can transition to ON_HOLD
+    bulk_data_2 = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-2", "pt-3"],  # Both PLAYING
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response2 = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data_2, headers={"X-User-Id": "user-1"}
+    )
+    assert response2.status_code == 200
+
+    data = response2.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+    assert len(data["items"]) == 2
+
+    # Verify both playthroughs were updated
+    for item in data["items"]:
+        assert item["id"] in ["pt-2", "pt-3"]
+        assert item["status"] == "ON_HOLD"
+
+    # Verify the changes persisted
+    response = client.get("/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "ON_HOLD"
+
+
+def test_bulk_update_platform_success(test_data):
+    """Test successfully updating platform for multiple playthroughs."""
+    bulk_data = {
+        "action": "update_platform",
+        "playthrough_ids": ["pt-1", "pt-2"],
+        "data": {"platform": "Steam Deck"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+    assert len(data["items"]) == 2
+
+    # Verify platform was updated
+    for item in data["items"]:
+        assert item["platform"] == "Steam Deck"
+
+
+def test_bulk_add_time_success(test_data):
+    """Test successfully adding play time to multiple playthroughs."""
+    # Get initial play times
+    response1 = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    initial_time1 = response1.json()["play_time_hours"]
+
+    response2 = client.get("/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"})
+    initial_time2 = response2.json()["play_time_hours"]
+
+    bulk_data = {
+        "action": "add_time",
+        "playthrough_ids": ["pt-1", "pt-2"],
+        "data": {"hours": 5.5},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+
+    # Verify time was added correctly
+    for item in data["items"]:
+        if item["id"] == "pt-1":
+            expected_time = (initial_time1 or 0) + 5.5
+            assert item["play_time_hours"] == expected_time
+        elif item["id"] == "pt-2":
+            expected_time = (initial_time2 or 0) + 5.5
+            assert item["play_time_hours"] == expected_time
+
+
+def test_bulk_delete_success(test_data):
+    """Test successfully deleting multiple playthroughs."""
+    # Verify playthroughs exist first
+    response = client.get("/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    response = client.get("/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    bulk_data = {"action": "delete", "playthrough_ids": ["pt-3", "pt-4"]}
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 2
+
+    # Verify playthroughs were deleted
+    response = client.get("/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 404
+
+    response = client.get("/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 404
+
+
+def test_bulk_partial_success_207(test_data):
+    """Test partial success returns 207 with mixed results."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": [
+            "pt-2",  # PLAYING -> ON_HOLD (valid)
+            "non-existent",  # Invalid ID
+            "pt-1",  # COMPLETED -> ON_HOLD (invalid transition)
+        ],  # Mix of valid and invalid transitions/IDs
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 207
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 1  # Only pt-2 was updated
+    assert data["failed_count"] == 2
+    assert len(data["items"]) == 1  # Only successful items
+    assert len(data["failed_items"]) == 2
+
+    # Check failed item details
+    failed_ids = [item["id"] for item in data["failed_items"]]
+    assert "non-existent" in failed_ids
+    assert "pt-1" in failed_ids
+
+    # Check specific error types
+    for failed_item in data["failed_items"]:
+        if failed_item["id"] == "non-existent":
+            assert "not found" in failed_item["error"].lower()
+        elif failed_item["id"] == "pt-1":
+            assert "invalid status transition" in failed_item["error"].lower()
+
+
+def test_bulk_user_isolation(test_data):
+    """Test users can only bulk operate on their own playthroughs."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-2", "pt-6"],  # pt-2 belongs to user-1, pt-6 to user-2
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 207  # Partial success
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 1  # Only pt-2
+    assert data["failed_count"] == 1  # pt-6 failed
+
+    # Verify user-2's playthrough wasn't modified
+    response = client.get("/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-2"})
+    assert response.status_code == 200
+    assert response.json()["status"] == "PLAYING"  # Should remain unchanged
+
+
+def test_bulk_invalid_action(test_data):
+    """Test invalid action returns 422."""
+    bulk_data = {
+        "action": "invalid_action",
+        "playthrough_ids": ["pt-1"],
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+
+
+def test_bulk_invalid_status_transition(test_data):
+    """Test bulk status update with invalid transitions."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-1"],  # pt-1 is COMPLETED
+        "data": {"status": "PLANNING"},  # Invalid transition from COMPLETED to PLANNING
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 207  # Partial success (all failed)
+
+    data = response.json()
+    assert data["success"] is False
+    assert data["updated_count"] == 0
+    assert data["failed_count"] == 1
+    assert len(data["failed_items"]) == 1
+    assert "Invalid status transition" in data["failed_items"][0]["error"]
+
+
+def test_bulk_empty_playthrough_ids(test_data):
+    """Test bulk operation with empty playthrough IDs list."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": [],
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422  # Pydantic validation error
+
+
+def test_bulk_missing_required_fields(test_data):
+    """Test bulk operation with missing required fields."""
+    # Missing action
+    bulk_data = {"playthrough_ids": ["pt-1"], "data": {"status": "ON_HOLD"}}
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+
+
+def test_bulk_invalid_data_for_action(test_data):
+    """Test bulk operation with invalid data for specific actions."""
+    # Missing required data for update_status
+    bulk_data = {"action": "update_status", "playthrough_ids": ["pt-1"], "data": {}}
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 400
+    assert "status is required" in response.json()["message"].lower()
+
+    # Missing required data for add_time
+    bulk_data = {"action": "add_time", "playthrough_ids": ["pt-1"], "data": {}}
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 400
+    assert "hours is required" in response.json()["message"].lower()
+
+
+def test_bulk_add_time_with_none_initial_time(test_data):
+    """Test adding time to playthroughs that have no initial play time."""
+    # pt-3 has no play time initially (None)
+    bulk_data = {
+        "action": "add_time",
+        "playthrough_ids": ["pt-3"],
+        "data": {"hours": 10.5},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert data["updated_count"] == 1
+    assert data["items"][0]["play_time_hours"] == 10.5
+
+
+def test_bulk_response_format(test_data):
+    """Test that bulk response has correct format for success case."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-2"],
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # Verify required fields are present
+    assert "success" in data
+    assert "updated_count" in data
+    assert "items" in data
+    assert isinstance(data["success"], bool)
+    assert isinstance(data["updated_count"], int)
+    assert isinstance(data["items"], list)
+    assert data["success"] is True
+
+    # For successful operations, these fields should not be present
+    assert "failed_count" not in data
+    assert "failed_items" not in data

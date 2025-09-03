@@ -5,6 +5,7 @@ from datetime import datetime, date, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, asc, func, select
 from sqlalchemy.exc import IntegrityError
@@ -19,6 +20,11 @@ from app.schemas import (
     PlaythroughUpdate,
     PlaythroughComplete,
     PlaythroughDeleteResponse,
+    PlaythroughBulkRequest,
+    PlaythroughBulkResponse,
+    BulkAction,
+    BulkResultItem,
+    BulkFailedItem,
     PlaythroughResponse,
     PlaythroughDetail,
     PlaythroughSortBy,
@@ -764,3 +770,165 @@ async def delete_playthrough(
         db.rollback()
         logger.error(f"Database error deleting playthrough: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete playthrough")
+
+
+@router.post("/bulk", response_model=PlaythroughBulkResponse)
+async def bulk_playthrough_operations(
+    bulk_request: PlaythroughBulkRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughBulkResponse:
+    """Perform bulk operations on multiple playthroughs."""
+
+    logger.info(
+        f"User {current_user.id} performing bulk operation {bulk_request.action} "
+        f"on {len(bulk_request.playthrough_ids)} playthroughs"
+    )
+
+    # Validate action-specific data
+    if bulk_request.action == BulkAction.UPDATE_STATUS:
+        if not bulk_request.data or "status" not in bulk_request.data:
+            raise HTTPException(
+                status_code=400, detail="Status is required for update_status action"
+            )
+    elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
+        if not bulk_request.data or "platform" not in bulk_request.data:
+            raise HTTPException(
+                status_code=400,
+                detail="Platform is required for update_platform action",
+            )
+    elif bulk_request.action == BulkAction.ADD_TIME:
+        if not bulk_request.data or "hours" not in bulk_request.data:
+            raise HTTPException(
+                status_code=400, detail="Hours is required for add_time action"
+            )
+
+    # Process each playthrough
+    successful_items = []
+    failed_items = []
+    now = datetime.now(timezone.utc)
+
+    for playthrough_id in bulk_request.playthrough_ids:
+        try:
+            # Find the playthrough
+            existing_playthrough = (
+                db.query(Playthrough)
+                .filter(
+                    and_(
+                        Playthrough.id == playthrough_id,
+                        Playthrough.user_id == current_user.id,
+                    )
+                )
+                .first()
+            )
+
+            if not existing_playthrough:
+                failed_items.append(
+                    BulkFailedItem(id=playthrough_id, error="Playthrough not found")
+                )
+                continue
+
+            # Perform the requested action
+            if bulk_request.action == BulkAction.UPDATE_STATUS:
+                new_status = bulk_request.data["status"]
+
+                # Validate status transition
+                if not _is_valid_status_transition(
+                    existing_playthrough.status, new_status
+                ):
+                    failed_items.append(
+                        BulkFailedItem(
+                            id=playthrough_id,
+                            error=f"Invalid status transition from {existing_playthrough.status} to {new_status}",
+                        )
+                    )
+                    continue
+
+                existing_playthrough.status = new_status
+
+                # Apply timestamp logic like in update endpoint
+                if new_status == "PLAYING" and not existing_playthrough.started_at:
+                    existing_playthrough.started_at = now
+                elif (
+                    new_status in ["COMPLETED", "MASTERED"]
+                    and not existing_playthrough.completed_at
+                ):
+                    existing_playthrough.completed_at = now
+
+                successful_items.append(
+                    BulkResultItem(id=playthrough_id, status=new_status)
+                )
+
+            elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
+                new_platform = bulk_request.data["platform"]
+                existing_playthrough.platform = new_platform
+
+                successful_items.append(
+                    BulkResultItem(id=playthrough_id, platform=new_platform)
+                )
+
+            elif bulk_request.action == BulkAction.ADD_TIME:
+                hours_to_add = bulk_request.data["hours"]
+                current_time = existing_playthrough.play_time_hours or 0
+                new_time = current_time + hours_to_add
+                existing_playthrough.play_time_hours = new_time
+
+                successful_items.append(
+                    BulkResultItem(id=playthrough_id, play_time_hours=new_time)
+                )
+
+            elif bulk_request.action == BulkAction.DELETE:
+                db.delete(existing_playthrough)
+
+                successful_items.append(BulkResultItem(id=playthrough_id))
+
+            # Update timestamp for all non-delete operations
+            if bulk_request.action != BulkAction.DELETE:
+                existing_playthrough.updated_at = now
+
+        except Exception as e:
+            logger.error(f"Error processing playthrough {playthrough_id}: {e}")
+            failed_items.append(
+                BulkFailedItem(id=playthrough_id, error=f"Processing error: {str(e)}")
+            )
+
+    # Commit all changes
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Database error in bulk operation: {e}")
+        raise HTTPException(status_code=500, detail="Failed to complete bulk operation")
+
+    # Determine response status and format
+    updated_count = len(successful_items)
+    failed_count = len(failed_items)
+    success = failed_count == 0
+
+    logger.info(
+        f"Bulk operation completed for user {current_user.id}: "
+        f"{updated_count} successful, {failed_count} failed"
+    )
+
+    # Convert items to dicts for JSON serialization
+    items_data = [item.model_dump() for item in successful_items]
+
+    response_data = {
+        "success": success,
+        "updated_count": updated_count,
+        "items": items_data,
+    }
+
+    if failed_count > 0:
+        failed_items_data = [item.model_dump() for item in failed_items]
+        response_data["failed_count"] = failed_count
+        response_data["failed_items"] = failed_items_data
+
+    # Return appropriate status code
+    if success:
+        return JSONResponse(content=response_data, status_code=200)
+    else:
+        return JSONResponse(
+            content=response_data,
+            status_code=207,  # Multi-Status
+        )

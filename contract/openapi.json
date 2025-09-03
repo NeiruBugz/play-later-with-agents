@@ -1455,6 +1455,82 @@
         }
       }
     },
+    "/api/v1/playthroughs/bulk": {
+      "post": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Bulk Playthrough Operations",
+        "description": "Perform bulk operations on multiple playthroughs.",
+        "operationId": "bulk_playthrough_operations_api_v1_playthroughs_bulk_post",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaythroughBulkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughBulkResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Read Root",
@@ -1486,6 +1562,16 @@
           "RENTAL"
         ],
         "title": "AcquisitionType"
+      },
+      "BulkAction": {
+        "type": "string",
+        "enum": [
+          "update_status",
+          "update_platform",
+          "add_time",
+          "delete"
+        ],
+        "title": "BulkAction"
       },
       "BulkCollectionAction": {
         "type": "string",
@@ -1604,6 +1690,76 @@
           "success"
         ],
         "title": "BulkCollectionResult"
+      },
+      "BulkFailedItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Playthrough ID that failed"
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "error"
+        ],
+        "title": "BulkFailedItem"
+      },
+      "BulkResultItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Playthrough ID"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status",
+            "description": "Updated status"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform",
+            "description": "Updated platform"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours",
+            "description": "Updated play time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "BulkResultItem"
       },
       "CollectionItemCreate": {
         "properties": {
@@ -2277,6 +2433,98 @@
           "achieved_at"
         ],
         "title": "Milestone"
+      },
+      "PlaythroughBulkRequest": {
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/BulkAction",
+            "description": "Bulk action to perform"
+          },
+          "playthrough_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Playthrough Ids",
+            "description": "List of playthrough IDs"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data",
+            "description": "Action-specific data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "playthrough_ids"
+        ],
+        "title": "PlaythroughBulkRequest"
+      },
+      "PlaythroughBulkResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the operation was fully successful"
+          },
+          "updated_count": {
+            "type": "integer",
+            "title": "Updated Count",
+            "description": "Number of playthroughs successfully updated"
+          },
+          "failed_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Count",
+            "description": "Number of playthroughs that failed (for partial success)"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BulkResultItem"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Successfully updated items"
+          },
+          "failed_items": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BulkFailedItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed Items",
+            "description": "Failed items (for partial success)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "updated_count",
+          "items"
+        ],
+        "title": "PlaythroughBulkResponse"
       },
       "PlaythroughComplete": {
         "properties": {

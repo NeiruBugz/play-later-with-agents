@@ -229,6 +229,47 @@ class PlaythroughDeleteResponse(BaseModel):
     message: str = Field(..., description="Success message")
 
 
+class BulkAction(str, Enum):
+    UPDATE_STATUS = "update_status"
+    UPDATE_PLATFORM = "update_platform"
+    ADD_TIME = "add_time"
+    DELETE = "delete"
+
+
+class PlaythroughBulkRequest(BaseModel):
+    action: BulkAction = Field(..., description="Bulk action to perform")
+    playthrough_ids: list[str] = Field(
+        ..., min_length=1, description="List of playthrough IDs"
+    )
+    data: Optional[dict] = Field(None, description="Action-specific data")
+
+
+class BulkResultItem(BaseModel):
+    id: str = Field(..., description="Playthrough ID")
+    status: Optional[str] = Field(None, description="Updated status")
+    platform: Optional[str] = Field(None, description="Updated platform")
+    play_time_hours: Optional[float] = Field(None, description="Updated play time")
+
+
+class BulkFailedItem(BaseModel):
+    id: str = Field(..., description="Playthrough ID that failed")
+    error: str = Field(..., description="Error message")
+
+
+class PlaythroughBulkResponse(BaseModel):
+    success: bool = Field(..., description="Whether the operation was fully successful")
+    updated_count: int = Field(
+        ..., description="Number of playthroughs successfully updated"
+    )
+    failed_count: Optional[int] = Field(
+        None, description="Number of playthroughs that failed (for partial success)"
+    )
+    items: list[BulkResultItem] = Field(..., description="Successfully updated items")
+    failed_items: Optional[list[BulkFailedItem]] = Field(
+        None, description="Failed items (for partial success)"
+    )
+
+
 class PlaythroughResponse(BaseModel):
     id: str
     user_id: str

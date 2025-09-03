@@ -17,10 +17,12 @@ from app.schemas import (
     PlaythroughListItem,
     PlaythroughCreate,
     PlaythroughUpdate,
+    PlaythroughComplete,
     PlaythroughResponse,
     PlaythroughDetail,
     PlaythroughSortBy,
     PlaythroughStatus,
+    CompletionType,
     GameSummary,
     GameDetail,
     CollectionSnippet,
@@ -602,3 +604,118 @@ async def update_playthrough(
         db.rollback()
         logger.error(f"Database error updating playthrough: {e}")
         raise HTTPException(status_code=500, detail="Failed to update playthrough")
+
+
+@router.post("/{playthrough_id}/complete", response_model=PlaythroughResponse)
+async def complete_playthrough(
+    playthrough_id: str,
+    completion_data: PlaythroughComplete,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughResponse:
+    """Mark playthrough as completed with final details."""
+
+    logger.info(f"User {current_user.id} completing playthrough {playthrough_id}")
+
+    # Find the existing playthrough
+    existing_playthrough = (
+        db.query(Playthrough)
+        .filter(
+            and_(
+                Playthrough.id == playthrough_id, Playthrough.user_id == current_user.id
+            )
+        )
+        .first()
+    )
+
+    if not existing_playthrough:
+        logger.warning(
+            f"Playthrough {playthrough_id} not found for user {current_user.id}"
+        )
+        raise HTTPException(status_code=404, detail="Playthrough not found")
+
+    # Check if already completed
+    if existing_playthrough.status in ["COMPLETED", "MASTERED", "DROPPED"]:
+        logger.warning(
+            f"Playthrough {playthrough_id} is already completed with status {existing_playthrough.status}"
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=f"Playthrough is already completed with status {existing_playthrough.status}",
+        )
+
+    # Validate status transitions - completion is only allowed from PLAYING or ON_HOLD
+    completion_status = completion_data.completion_type.value
+    if not _is_valid_status_transition(existing_playthrough.status, completion_status):
+        logger.warning(
+            f"Invalid status transition from {existing_playthrough.status} to {completion_status} "
+            f"for playthrough {playthrough_id}"
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid status transition from {existing_playthrough.status} to {completion_status}",
+        )
+
+    # Apply completion updates
+    now = datetime.now(timezone.utc)
+
+    # Update status
+    existing_playthrough.status = completion_status
+
+    # Set completed_at for COMPLETED/MASTERED/DROPPED (if provided or auto-set)
+    if completion_status in ["COMPLETED", "MASTERED", "DROPPED"]:
+        if completion_data.completed_at:
+            existing_playthrough.completed_at = completion_data.completed_at
+        elif not existing_playthrough.completed_at:
+            existing_playthrough.completed_at = now
+            logger.info(f"Auto-set completed_at for playthrough {playthrough_id}")
+
+    # Update final play time if provided
+    if completion_data.final_play_time_hours is not None:
+        existing_playthrough.play_time_hours = completion_data.final_play_time_hours
+
+    # Update rating if provided (but not for dropped playthroughs unless explicitly set)
+    if completion_data.rating is not None:
+        existing_playthrough.rating = completion_data.rating
+    elif completion_status == "DROPPED" and completion_data.rating is None:
+        # Don't require rating for dropped games
+        pass
+
+    # Update notes if provided
+    if completion_data.final_notes is not None:
+        existing_playthrough.notes = completion_data.final_notes
+
+    # Always update the updated_at timestamp
+    existing_playthrough.updated_at = now
+
+    try:
+        db.commit()
+        db.refresh(existing_playthrough)
+
+        logger.info(
+            f"Completed playthrough {playthrough_id} with status {completion_status} for user {current_user.id}"
+        )
+
+        # Return the updated playthrough
+        return PlaythroughResponse(
+            id=existing_playthrough.id,
+            user_id=existing_playthrough.user_id,
+            game_id=existing_playthrough.game_id,
+            collection_id=existing_playthrough.collection_id,
+            status=PlaythroughStatus(existing_playthrough.status),
+            platform=existing_playthrough.platform,
+            started_at=existing_playthrough.started_at,
+            completed_at=existing_playthrough.completed_at,
+            play_time_hours=existing_playthrough.play_time_hours,
+            playthrough_type=existing_playthrough.playthrough_type,
+            difficulty=existing_playthrough.difficulty,
+            rating=existing_playthrough.rating,
+            notes=existing_playthrough.notes,
+            created_at=existing_playthrough.created_at,
+            updated_at=existing_playthrough.updated_at,
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"Database error completing playthrough: {e}")
+        raise HTTPException(status_code=500, detail="Failed to complete playthrough")

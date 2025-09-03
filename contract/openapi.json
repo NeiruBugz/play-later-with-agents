@@ -1212,6 +1212,174 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Update Playthrough",
+        "description": "Update a playthrough with business rules and valid status transitions.",
+        "operationId": "update_playthrough_api_v1_playthroughs__playthrough_id__put",
+        "parameters": [
+          {
+            "name": "playthrough_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Playthrough Id"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaythroughUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/playthroughs/{playthrough_id}/complete": {
+      "post": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Complete Playthrough",
+        "description": "Mark playthrough as completed with final details.",
+        "operationId": "complete_playthrough_api_v1_playthroughs__playthrough_id__complete_post",
+        "parameters": [
+          {
+            "name": "playthrough_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Playthrough Id"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaythroughComplete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/": {
@@ -1785,6 +1953,16 @@
         ],
         "title": "CollectionStats"
       },
+      "CompletionType": {
+        "type": "string",
+        "enum": [
+          "COMPLETED",
+          "MASTERED",
+          "DROPPED",
+          "ON_HOLD"
+        ],
+        "title": "CompletionType"
+      },
       "GameDetail": {
         "properties": {
           "id": {
@@ -2026,6 +2204,71 @@
           "achieved_at"
         ],
         "title": "Milestone"
+      },
+      "PlaythroughComplete": {
+        "properties": {
+          "completion_type": {
+            "$ref": "#/components/schemas/CompletionType",
+            "description": "Type of completion"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "When the playthrough was completed (auto-set if not provided)"
+          },
+          "final_play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Play Time Hours",
+            "description": "Final play time in hours"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Final rating (1-10)"
+          },
+          "final_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Notes",
+            "description": "Final notes about the playthrough"
+          }
+        },
+        "type": "object",
+        "required": [
+          "completion_type"
+        ],
+        "title": "PlaythroughComplete"
       },
       "PlaythroughCreate": {
         "properties": {
@@ -2642,6 +2885,124 @@
           "MASTERED"
         ],
         "title": "PlaythroughStatus"
+      },
+      "PlaythroughUpdate": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlaythroughStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Playthrough status"
+          },
+          "platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Platform",
+            "description": "Gaming platform"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "When the playthrough was started"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "When the playthrough was completed"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours",
+            "description": "Play time in hours"
+          },
+          "playthrough_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playthrough Type",
+            "description": "Type of playthrough (e.g., 'First Run', '100% Completion')"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty",
+            "description": "Difficulty level"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Personal rating (1-10)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Personal notes about the playthrough"
+          }
+        },
+        "type": "object",
+        "title": "PlaythroughUpdate"
       },
       "SortOrder": {
         "type": "string",

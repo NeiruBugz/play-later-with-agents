@@ -207,6 +207,23 @@ class PlaythroughUpdate(BaseModel):
     )
 
 
+class PlaythroughComplete(BaseModel):
+    completion_type: CompletionType = Field(..., description="Type of completion")
+    completed_at: Optional[datetime] = Field(
+        None,
+        description="When the playthrough was completed (auto-set if not provided)",
+    )
+    final_play_time_hours: Optional[float] = Field(
+        default=None, ge=0, description="Final play time in hours"
+    )
+    rating: Optional[int] = Field(
+        default=None, ge=1, le=10, description="Final rating (1-10)"
+    )
+    final_notes: Optional[str] = Field(
+        None, description="Final notes about the playthrough"
+    )
+
+
 class PlaythroughResponse(BaseModel):
     id: str
     user_id: str

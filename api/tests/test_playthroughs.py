@@ -1490,3 +1490,277 @@ def test_update_playthrough_empty_body(test_data):
     data = response.json()
     assert data["id"] == "pt-1"
     assert data["status"] == "COMPLETED"
+
+
+# ===== POST /playthroughs/{id}/complete Tests =====
+
+
+def test_complete_playthrough_requires_auth():
+    """Test that completing playthrough requires authentication."""
+    completion_data = {
+        "completed_at": "2024-04-20T15:45:00Z",
+        "final_play_time_hours": 85.5,
+        "rating": 9,
+        "final_notes": "Amazing game!",
+        "completion_type": "COMPLETED",
+    }
+
+    response = client.post("/api/v1/playthroughs/pt-2/complete", json=completion_data)
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_complete_playthrough_success_from_playing(test_data):
+    """Test successfully completing a playthrough that is currently playing."""
+    completion_data = {
+        "completed_at": "2024-04-20T15:45:00Z",
+        "final_play_time_hours": 85.5,
+        "rating": 9,
+        "final_notes": "Amazing game, loved every moment!",
+        "completion_type": "COMPLETED",
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == "pt-2"
+    assert data["status"] == "COMPLETED"
+    assert data["completed_at"] == "2024-04-20T15:45:00Z"
+    assert data["play_time_hours"] == 85.5
+    assert data["rating"] == 9
+    assert data["notes"] == "Amazing game, loved every moment!"
+    assert data["updated_at"] != data["created_at"]  # Should be updated
+
+
+def test_complete_playthrough_success_mastered(test_data):
+    """Test successfully completing a playthrough with mastered completion type."""
+    # Create a new playing playthrough first
+    create_data = {"game_id": "game-3", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    playthrough_id = create_response.json()["id"]
+
+    completion_data = {
+        "completed_at": "2024-05-01T20:30:00Z",
+        "final_play_time_hours": 150.0,
+        "rating": 10,
+        "final_notes": "100% achievement run complete!",
+        "completion_type": "MASTERED",
+    }
+
+    response = client.post(
+        f"/api/v1/playthroughs/{playthrough_id}/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "MASTERED"
+    assert data["completed_at"] == "2024-05-01T20:30:00Z"
+    assert data["play_time_hours"] == 150.0
+    assert data["rating"] == 10
+    assert data["notes"] == "100% achievement run complete!"
+
+
+def test_complete_playthrough_success_dropped(test_data):
+    """Test successfully marking a playthrough as dropped."""
+    # Create a new playing playthrough first
+    create_data = {"game_id": "game-1", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    playthrough_id = create_response.json()["id"]
+
+    completion_data = {
+        "completed_at": "2024-03-10T12:00:00Z",  # Date when dropped
+        "final_play_time_hours": 15.0,
+        "final_notes": "Lost interest after a few hours",
+        "completion_type": "DROPPED",
+    }
+
+    response = client.post(
+        f"/api/v1/playthroughs/{playthrough_id}/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "DROPPED"
+    assert data["completed_at"] == "2024-03-10T12:00:00Z"
+    assert data["play_time_hours"] == 15.0
+    assert data["notes"] == "Lost interest after a few hours"
+    assert data["rating"] is None  # No rating for dropped games
+
+
+def test_complete_playthrough_success_on_hold(test_data):
+    """Test successfully putting a playthrough on hold."""
+    # Create a new playing playthrough first
+    create_data = {"game_id": "game-2", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    playthrough_id = create_response.json()["id"]
+
+    completion_data = {
+        "final_play_time_hours": 25.0,
+        "final_notes": "Taking a break, will return later",
+        "completion_type": "ON_HOLD",
+    }
+
+    response = client.post(
+        f"/api/v1/playthroughs/{playthrough_id}/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "ON_HOLD"
+    assert data["completed_at"] is None  # On hold doesn't set completed_at
+    assert data["play_time_hours"] == 25.0
+    assert data["notes"] == "Taking a break, will return later"
+
+
+def test_complete_playthrough_minimal_data(test_data):
+    """Test completing playthrough with minimal required data."""
+    # Create a new playing playthrough first
+    create_data = {"game_id": "game-4", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    playthrough_id = create_response.json()["id"]
+
+    completion_data = {"completion_type": "COMPLETED"}
+
+    response = client.post(
+        f"/api/v1/playthroughs/{playthrough_id}/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "COMPLETED"
+    assert data["completed_at"] is not None  # Should be set automatically
+    # Other fields should remain unchanged from the original playthrough
+
+
+def test_complete_playthrough_already_completed(test_data):
+    """Test completing an already completed playthrough returns 409."""
+    completion_data = {
+        "completed_at": "2024-04-20T15:45:00Z",
+        "final_play_time_hours": 85.5,
+        "rating": 9,
+        "completion_type": "COMPLETED",
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-1/complete",  # pt-1 is already COMPLETED
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 409
+    assert "already completed" in response.json()["message"].lower()
+
+
+def test_complete_playthrough_from_invalid_status(test_data):
+    """Test completing from invalid status (PLANNING) returns 422."""
+    completion_data = {"completion_type": "COMPLETED"}
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-3/complete",  # pt-3 is PLANNING status
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422
+    assert "Invalid status transition" in response.json()["message"]
+
+
+def test_complete_playthrough_not_found(test_data):
+    """Test completing non-existent playthrough."""
+    completion_data = {"completion_type": "COMPLETED"}
+
+    response = client.post(
+        "/api/v1/playthroughs/non-existent/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_complete_playthrough_user_isolation(test_data):
+    """Test users cannot complete other users' playthroughs."""
+    completion_data = {"completion_type": "COMPLETED"}
+
+    # Try to complete user-1's playthrough as user-2
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-2"},
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_complete_playthrough_invalid_completion_type(test_data):
+    """Test completing with invalid completion type."""
+    completion_data = {"completion_type": "INVALID_TYPE"}
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422
+
+
+def test_complete_playthrough_invalid_rating(test_data):
+    """Test completing with invalid rating."""
+    completion_data = {
+        "completion_type": "COMPLETED",
+        "rating": 15,  # Should be 1-10
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422
+
+
+def test_complete_playthrough_negative_play_time(test_data):
+    """Test completing with negative play time."""
+    completion_data = {"completion_type": "COMPLETED", "final_play_time_hours": -5.0}
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422
+
+
+def test_complete_playthrough_missing_required_field(test_data):
+    """Test completing without required completion_type field."""
+    completion_data = {"final_play_time_hours": 50.0, "rating": 8}
+
+    response = client.post(
+        "/api/v1/playthroughs/pt-2/complete",
+        json=completion_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422

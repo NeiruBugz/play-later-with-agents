@@ -1144,3 +1144,349 @@ def test_get_playthrough_response_structure(test_data):
     game_detail_fields = ["description", "igdb_id", "hltb_id", "steam_app_id"]
     for field in game_detail_fields:
         assert field in game, f"Missing GameDetail field: {field}"
+
+
+# ===== PUT /playthroughs/{id} Tests =====
+
+
+def test_update_playthrough_requires_auth():
+    """Test that updating playthroughs requires authentication."""
+    update_data = {"status": "PLAYING"}
+
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data)
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_update_playthrough_basic_fields(test_data):
+    """Test updating basic playthrough fields."""
+    update_data = {
+        "platform": "Steam Deck",
+        "difficulty": "Easy",
+        "playthrough_type": "Casual Run",
+        "notes": "Playing on the go",
+        "play_time_hours": 25.5,
+    }
+
+    response = client.put(
+        "/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["platform"] == "Steam Deck"
+    assert data["difficulty"] == "Easy"
+    assert data["playthrough_type"] == "Casual Run"
+    assert data["notes"] == "Playing on the go"
+    assert data["play_time_hours"] == 25.5
+    assert data["status"] == "PLANNING"  # Should remain unchanged
+    assert data["updated_at"] != data["created_at"]  # Should be updated
+
+
+def test_update_playthrough_valid_status_transitions(test_data):
+    """Test valid status transitions with timestamp logic."""
+    # PLANNING -> PLAYING (should set started_at)
+    update_data = {"status": "PLAYING"}
+    response = client.put(
+        "/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "PLAYING"
+    assert data["started_at"] is not None  # Should be set automatically
+    assert data["completed_at"] is None
+
+    # PLAYING -> COMPLETED (should set completed_at)
+    update_data = {"status": "COMPLETED", "rating": 8}
+    response = client.put(
+        "/api/v1/playthroughs/pt-2", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "COMPLETED"
+    assert data["completed_at"] is not None  # Should be set automatically
+    assert data["rating"] == 8
+
+    # PLAYING -> ON_HOLD
+    # Create a new playthrough first since pt-2 is now completed
+    create_data = {"game_id": "game-4", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    new_playthrough_id = create_response.json()["id"]
+
+    update_data = {"status": "ON_HOLD", "notes": "Taking a break"}
+    response = client.put(
+        f"/api/v1/playthroughs/{new_playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "ON_HOLD"
+    assert data["notes"] == "Taking a break"
+
+
+def test_update_playthrough_playing_to_mastered(test_data):
+    """Test PLAYING -> MASTERED transition (should set completed_at)."""
+    # First create a playing playthrough
+    create_data = {"game_id": "game-1", "status": "PLAYING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    assert create_response.status_code == 201
+    playthrough_id = create_response.json()["id"]
+
+    # Update to MASTERED
+    update_data = {
+        "status": "MASTERED",
+        "rating": 10,
+        "playthrough_type": "100% Achievement Run",
+        "play_time_hours": 150.0,
+    }
+
+    response = client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "MASTERED"
+    assert data["completed_at"] is not None  # Should be set automatically
+    assert data["rating"] == 10
+    assert data["play_time_hours"] == 150.0
+
+
+def test_update_playthrough_restart_scenarios(test_data):
+    """Test restarting dropped playthroughs."""
+    # DROPPED -> PLANNING (restart scenario)
+    update_data = {"status": "PLANNING", "notes": "Decided to give it another try"}
+    response = client.put(
+        "/api/v1/playthroughs/pt-4", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "PLANNING"
+    assert data["notes"] == "Decided to give it another try"
+    # started_at and completed_at should remain as they were
+
+    # DROPPED -> PLAYING (direct restart)
+    create_data = {"game_id": "game-2", "status": "DROPPED", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    dropped_id = create_response.json()["id"]
+
+    update_data = {"status": "PLAYING", "notes": "Starting fresh"}
+    response = client.put(
+        f"/api/v1/playthroughs/{dropped_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "PLAYING"
+    assert data["started_at"] is not None  # Should be set/updated
+
+
+def test_update_playthrough_invalid_status_transitions(test_data):
+    """Test invalid status transitions."""
+    # COMPLETED -> PLAYING (invalid - can't uncomplete)
+    update_data = {"status": "PLAYING"}
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+    assert "Invalid status transition" in response.json()["message"]
+
+    # MASTERED -> PLANNING (invalid - mastered should be final)
+    # First create a mastered playthrough
+    create_data = {"game_id": "game-3", "status": "COMPLETED", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    playthrough_id = create_response.json()["id"]
+
+    # Update to mastered first
+    client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json={"status": "MASTERED"},
+        headers={"X-User-Id": "user-1"},
+    )
+
+    # Try to change from mastered to planning
+    update_data = {"status": "PLANNING"}
+    response = client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 422
+    assert "Invalid status transition" in response.json()["message"]
+
+
+def test_update_playthrough_validation_constraints(test_data):
+    """Test field validation constraints."""
+    # Invalid rating
+    update_data = {"rating": 15}  # Should be 1-10
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+
+    # Negative play time
+    update_data = {"play_time_hours": -5.0}
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+
+    # Invalid status enum
+    update_data = {"status": "INVALID_STATUS"}
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422
+
+
+def test_update_playthrough_not_found(test_data):
+    """Test updating non-existent playthrough."""
+    update_data = {"status": "PLAYING"}
+    response = client.put(
+        "/api/v1/playthroughs/non-existent",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_update_playthrough_user_isolation(test_data):
+    """Test that users cannot update other users' playthroughs."""
+    update_data = {"status": "PLAYING"}
+
+    # Try to update user-1's playthrough as user-2
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+    # Try to update user-2's playthrough as user-1
+    response = client.put(
+        "/api/v1/playthroughs/pt-6", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_update_playthrough_immutable_fields(test_data):
+    """Test that certain fields cannot be updated."""
+    update_data = {
+        "id": "different-id",  # Should be ignored
+        "user_id": "different-user",  # Should be ignored
+        "game_id": "different-game",  # Should be ignored
+        "created_at": "2020-01-01T00:00:00Z",  # Should be ignored
+        "platform": "Updated Platform",  # Should be allowed
+    }
+
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # Immutable fields should not change
+    assert data["id"] == "pt-1"  # Original value
+    assert data["user_id"] == "user-1"  # Original value
+    assert data["game_id"] == "game-1"  # Original value
+    assert data["created_at"] != "2020-01-01T00:00:00Z"  # Original value
+
+    # Mutable fields should change
+    assert data["platform"] == "Updated Platform"
+
+
+def test_update_playthrough_partial_updates(test_data):
+    """Test that partial updates work correctly."""
+    # Update only one field
+    update_data = {"notes": "Updated notes only"}
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["notes"] == "Updated notes only"
+    # Other fields should remain unchanged
+    assert data["status"] == "COMPLETED"
+    assert data["platform"] == "PC"
+    assert data["rating"] == 9
+
+
+def test_update_playthrough_timestamp_logic_detailed(test_data):
+    """Test detailed timestamp logic for different scenarios."""
+    # Create a planning playthrough
+    create_data = {"game_id": "game-1", "status": "PLANNING", "platform": "PC"}
+    create_response = client.post(
+        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
+    )
+    playthrough_id = create_response.json()["id"]
+
+    # Update to PLAYING - should set started_at
+    update_data = {"status": "PLAYING"}
+    response = client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    first_started_at = data["started_at"]
+    assert first_started_at is not None
+
+    # Update to ON_HOLD - should not change started_at
+    update_data = {"status": "ON_HOLD"}
+    response = client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["started_at"] == first_started_at  # Should remain the same
+
+    # Update to COMPLETED - should set completed_at
+    update_data = {"status": "COMPLETED"}
+    response = client.put(
+        f"/api/v1/playthroughs/{playthrough_id}",
+        json=update_data,
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["completed_at"] is not None
+    assert data["started_at"] == first_started_at  # Should remain the same
+
+
+def test_update_playthrough_empty_body(test_data):
+    """Test updating with empty body."""
+    response = client.put(
+        "/api/v1/playthroughs/pt-1", json={}, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Should return the playthrough unchanged except for updated_at
+    data = response.json()
+    assert data["id"] == "pt-1"
+    assert data["status"] == "COMPLETED"

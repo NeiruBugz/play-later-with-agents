@@ -96,22 +96,22 @@
 - Validate: deterministic aggregates in tests.
 - Commit: `feat(api): collection statistics endpoint`
 
-### Task 15 – GET /playthroughs
+### [x] Task 15 – GET /playthroughs
 - List with advanced filters (status, platform, rating, time, dates, search) and sorting.
 - Validate: key filter combinations and pagination.
 - Commit: `feat(api): list playthroughs with filters`
 
-### Task 16 – POST /playthroughs
+### [x] Task 16 – POST /playthroughs
 - Create with validation (exists, ownership, enums).
 - Validate: 201; 404 on invalid refs; 422 invalid payload.
 - Commit: `feat(api): create playthrough`
 
-### Task 17 – GET /playthroughs/{id}
+### [x] Task 17 – GET /playthroughs/{id}
 - Full detail with embedded game/collection and milestones.
 - Validate: 200/404.
 - Commit: `feat(api): get playthrough by id`
 
-### Task 18 – PUT /playthroughs/{id}
+### [x] Task 18 – PUT /playthroughs/{id}
 - Update with business rules and valid status transitions.
 - Validate: 422 on invalid transitions; 200 on valid; timestamps logic.
 - Commit: `feat(api): update playthrough with rules`

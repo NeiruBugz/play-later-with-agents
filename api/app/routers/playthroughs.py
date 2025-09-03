@@ -16,6 +16,7 @@ from app.schemas import (
     PlaythroughListResponse,
     PlaythroughListItem,
     PlaythroughCreate,
+    PlaythroughUpdate,
     PlaythroughResponse,
     PlaythroughDetail,
     PlaythroughSortBy,
@@ -474,3 +475,130 @@ async def get_playthrough_by_id(
 
     logger.info(f"Retrieved playthrough {playthrough_id} for user {current_user.id}")
     return playthrough_detail
+
+
+def _is_valid_status_transition(from_status: str, to_status: str) -> bool:
+    """Check if the status transition is valid according to business rules."""
+    # Define valid transitions
+    valid_transitions = {
+        "PLANNING": ["PLAYING", "DROPPED"],
+        "PLAYING": ["COMPLETED", "DROPPED", "ON_HOLD", "MASTERED"],
+        "ON_HOLD": ["PLAYING", "DROPPED", "COMPLETED", "MASTERED"],
+        "COMPLETED": ["MASTERED"],  # Allow upgrade to mastered
+        "DROPPED": ["PLANNING", "PLAYING"],  # Allow restart scenarios
+        "MASTERED": [],  # Mastered is final state - no transitions allowed
+    }
+
+    # If same status, always allow (no-op)
+    if from_status == to_status:
+        return True
+
+    return to_status in valid_transitions.get(from_status, [])
+
+
+@router.put("/{playthrough_id}", response_model=PlaythroughResponse)
+async def update_playthrough(
+    playthrough_id: str,
+    update_data: PlaythroughUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughResponse:
+    """Update a playthrough with business rules and valid status transitions."""
+
+    logger.info(f"User {current_user.id} updating playthrough {playthrough_id}")
+
+    # Find the existing playthrough
+    existing_playthrough = (
+        db.query(Playthrough)
+        .filter(
+            and_(
+                Playthrough.id == playthrough_id, Playthrough.user_id == current_user.id
+            )
+        )
+        .first()
+    )
+
+    if not existing_playthrough:
+        logger.warning(
+            f"Playthrough {playthrough_id} not found for user {current_user.id}"
+        )
+        raise HTTPException(status_code=404, detail="Playthrough not found")
+
+    # Validate status transition if status is being changed
+    if update_data.status and update_data.status.value != existing_playthrough.status:
+        if not _is_valid_status_transition(
+            existing_playthrough.status, update_data.status.value
+        ):
+            logger.warning(
+                f"Invalid status transition from {existing_playthrough.status} to {update_data.status.value} "
+                f"for playthrough {playthrough_id}"
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid status transition from {existing_playthrough.status} to {update_data.status.value}",
+            )
+
+    # Apply updates to the playthrough (only fields that were provided)
+    update_dict = update_data.model_dump(exclude_unset=True, exclude_none=False)
+
+    for field, value in update_dict.items():
+        if field == "status" and value:
+            setattr(existing_playthrough, field, value.value)
+        elif value is not None:
+            setattr(existing_playthrough, field, value)
+        elif field in update_dict:  # Handle explicit None values for nullable fields
+            setattr(existing_playthrough, field, None)
+
+    # Apply timestamp business logic
+    now = datetime.now(timezone.utc)
+
+    # Set started_at when transitioning to PLAYING (if not already set)
+    if (
+        update_data.status
+        and update_data.status.value == "PLAYING"
+        and not existing_playthrough.started_at
+    ):
+        existing_playthrough.started_at = now
+        logger.info(f"Set started_at for playthrough {playthrough_id}")
+
+    # Set completed_at when transitioning to COMPLETED or MASTERED (if not already set)
+    if (
+        update_data.status
+        and update_data.status.value in ["COMPLETED", "MASTERED"]
+        and not existing_playthrough.completed_at
+    ):
+        existing_playthrough.completed_at = now
+        logger.info(f"Set completed_at for playthrough {playthrough_id}")
+
+    # Always update the updated_at timestamp
+    existing_playthrough.updated_at = now
+
+    try:
+        db.commit()
+        db.refresh(existing_playthrough)
+
+        logger.info(f"Updated playthrough {playthrough_id} for user {current_user.id}")
+
+        # Return the updated playthrough
+        return PlaythroughResponse(
+            id=existing_playthrough.id,
+            user_id=existing_playthrough.user_id,
+            game_id=existing_playthrough.game_id,
+            collection_id=existing_playthrough.collection_id,
+            status=PlaythroughStatus(existing_playthrough.status),
+            platform=existing_playthrough.platform,
+            started_at=existing_playthrough.started_at,
+            completed_at=existing_playthrough.completed_at,
+            play_time_hours=existing_playthrough.play_time_hours,
+            playthrough_type=existing_playthrough.playthrough_type,
+            difficulty=existing_playthrough.difficulty,
+            rating=existing_playthrough.rating,
+            notes=existing_playthrough.notes,
+            created_at=existing_playthrough.created_at,
+            updated_at=existing_playthrough.updated_at,
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"Database error updating playthrough: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update playthrough")

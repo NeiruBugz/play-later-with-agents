@@ -183,6 +183,30 @@ class PlaythroughCreate(BaseModel):
     )
 
 
+class PlaythroughUpdate(BaseModel):
+    status: Optional[PlaythroughStatus] = Field(None, description="Playthrough status")
+    platform: Optional[str] = Field(None, description="Gaming platform")
+    started_at: Optional[datetime] = Field(
+        None, description="When the playthrough was started"
+    )
+    completed_at: Optional[datetime] = Field(
+        None, description="When the playthrough was completed"
+    )
+    play_time_hours: Optional[float] = Field(
+        default=None, ge=0, description="Play time in hours"
+    )
+    playthrough_type: Optional[str] = Field(
+        None, description="Type of playthrough (e.g., 'First Run', '100% Completion')"
+    )
+    difficulty: Optional[str] = Field(None, description="Difficulty level")
+    rating: Optional[int] = Field(
+        default=None, ge=1, le=10, description="Personal rating (1-10)"
+    )
+    notes: Optional[str] = Field(
+        None, description="Personal notes about the playthrough"
+    )
+
+
 class PlaythroughResponse(BaseModel):
     id: str
     user_id: str

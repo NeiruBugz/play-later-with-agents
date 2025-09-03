@@ -875,6 +875,12 @@ def bulk_playthrough_operations(
             raise HTTPException(
                 status_code=400, detail="Hours is required for add_time action"
             )
+    elif bulk_request.action == BulkAction.DELETE:
+        # No payload required
+        pass
+    else:
+        # Invalid/unsupported action
+        raise HTTPException(status_code=422, detail="Invalid action")
 
     successful_items: list[BulkResultItem] = []
     failed_items: list[BulkFailedItem] = []
@@ -918,10 +924,28 @@ def bulk_playthrough_operations(
                     and not existing_playthrough.completed_at
                 ):
                     existing_playthrough.completed_at = now
+                existing_playthrough.updated_at = now
+                db.commit()
+                db.refresh(existing_playthrough)
+                successful_items.append(
+                    BulkResultItem(
+                        id=existing_playthrough.id,
+                        status=existing_playthrough.status,
+                    )
+                )
 
             elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
                 platform_val = bulk_request.data["platform"]  # type: ignore[index]
                 existing_playthrough.platform = platform_val
+                existing_playthrough.updated_at = now
+                db.commit()
+                db.refresh(existing_playthrough)
+                successful_items.append(
+                    BulkResultItem(
+                        id=existing_playthrough.id,
+                        platform=existing_playthrough.platform,
+                    )
+                )
 
             elif bulk_request.action == BulkAction.ADD_TIME:
                 hours = bulk_request.data["hours"]  # type: ignore[index]
@@ -942,18 +966,20 @@ def bulk_playthrough_operations(
                 existing_playthrough.play_time_hours = (
                     existing_playthrough.play_time_hours or 0
                 ) + hours_val
-
-            existing_playthrough.updated_at = now
-            db.commit()
-            db.refresh(existing_playthrough)
-
-            successful_items.append(
-                BulkResultItem(
-                    id=existing_playthrough.id,
-                    status=existing_playthrough.status,
-                    updated_at=existing_playthrough.updated_at,
+                existing_playthrough.updated_at = now
+                db.commit()
+                db.refresh(existing_playthrough)
+                successful_items.append(
+                    BulkResultItem(
+                        id=existing_playthrough.id,
+                        play_time_hours=existing_playthrough.play_time_hours,
+                    )
                 )
-            )
+
+            elif bulk_request.action == BulkAction.DELETE:
+                db.delete(existing_playthrough)
+                db.commit()
+                successful_items.append(BulkResultItem(id=playthrough_id))
         except Exception as e:  # noqa: BLE001
             db.rollback()
             failed_items.append(BulkFailedItem(id=playthrough_id, error=str(e)))

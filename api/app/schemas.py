@@ -41,11 +41,14 @@ class PlaythroughStatus(str, Enum):
 
 
 class PlaythroughSortBy(str, Enum):
-    UPDATED_AT = "updated_at"
+    TITLE = "title"
+    STATUS = "status"
     STARTED_AT = "started_at"
     COMPLETED_AT = "completed_at"
+    UPDATED_AT = "updated_at"
     RATING = "rating"
     PLAY_TIME = "play_time_hours"
+    PLATFORM = "platform"
 
 
 # ===== Core DTOs =====

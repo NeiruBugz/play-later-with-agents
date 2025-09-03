@@ -28,7 +28,11 @@ from app.schemas import (
     CollectionStats,
 )
 
+import logging
+
 router = APIRouter(prefix="/collection", tags=["collection"])
+
+logger = logging.getLogger("app.router.collection")
 
 
 @router.get("", response_model=CollectionListResponse)
@@ -56,6 +60,9 @@ async def list_collection(
     db: Session = Depends(get_db),
 ) -> CollectionListResponse:
     """Get user's game collection with filtering, sorting, and pagination."""
+    logger.info(
+        f"User {current_user.id} requested collection list with filters: {{'platform': '{platform}', 'acquisition_type': '{acquisition_type}', 'priority': {priority}, 'is_active': {is_active}, 'search': '{search}'}}"
+    )
 
     # Build base query - start with CollectionItem joined with Game
     query = (

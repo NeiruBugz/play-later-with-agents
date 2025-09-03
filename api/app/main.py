@@ -1,3 +1,7 @@
+import logging.config
+from pathlib import Path
+
+import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,6 +9,12 @@ from app.config import settings
 from app.models import WelcomeResponse
 from app.exception_handlers import register_exception_handlers, request_id_middleware
 from app.routers import health, collection
+
+# Load logging configuration
+log_config_path = Path(__file__).parent.parent / "logging.yaml"
+with open(log_config_path) as f:
+    config = yaml.safe_load(f)
+    logging.config.dictConfig(config)
 
 
 def create_app() -> FastAPI:

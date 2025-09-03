@@ -12,6 +12,7 @@ uvicorn = "^0.22.0"
 pydantic-settings = "^2.0.0"
 sqlalchemy = "^2.0.0"
 psycopg2-binary = "^2.9.0"
+pyyaml = "^6.0.1"
 
 [tool.poetry.scripts]
 generate-schema = "scripts.generate_schema:main"

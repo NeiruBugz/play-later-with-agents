@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Response, status
-from sqlalchemy import or_
 
 from app.auth import CurrentUser, get_current_user
 from app.schemas import (
@@ -27,7 +26,6 @@ from app.services.errors import (
     NotFoundError,
     ConflictError,
     ValidationError,
-    OperationError,
     BadRequestError,
 )
 

@@ -700,7 +700,6 @@
           "playthroughs"
         ],
         "summary": "List Playthroughs",
-        "description": "Get user's playthroughs with advanced filtering options.",
         "operationId": "list_playthroughs_api_v1_playthroughs_get",
         "parameters": [
           {
@@ -1069,7 +1068,6 @@
           "playthroughs"
         ],
         "summary": "Create Playthrough",
-        "description": "Create a new playthrough for the authenticated user.",
         "operationId": "create_playthrough_api_v1_playthroughs_post",
         "parameters": [
           {
@@ -1145,7 +1143,6 @@
           "playthroughs"
         ],
         "summary": "Get Backlog",
-        "description": "Get user's backlog (planning status playthroughs).",
         "operationId": "get_backlog_api_v1_playthroughs_backlog_get",
         "parameters": [
           {
@@ -1231,7 +1228,6 @@
           "playthroughs"
         ],
         "summary": "Get Playing",
-        "description": "Get user's currently playing games (playing status playthroughs).",
         "operationId": "get_playing_api_v1_playthroughs_playing_get",
         "parameters": [
           {
@@ -1315,7 +1311,6 @@
           "playthroughs"
         ],
         "summary": "Get Completed",
-        "description": "Get user's completed games (completed status playthroughs) with filters and statistics.",
         "operationId": "get_completed_api_v1_playthroughs_completed_get",
         "parameters": [
           {
@@ -1437,7 +1432,6 @@
           "playthroughs"
         ],
         "summary": "Get Stats",
-        "description": "Get comprehensive playthrough statistics for the user.",
         "operationId": "get_stats_api_v1_playthroughs_stats_get",
         "parameters": [
           {
@@ -1503,7 +1497,6 @@
           "playthroughs"
         ],
         "summary": "Get Playthrough By Id",
-        "description": "Get a playthrough by ID with full details including embedded game, collection, and milestones.",
         "operationId": "get_playthrough_by_id_api_v1_playthroughs__playthrough_id__get",
         "parameters": [
           {
@@ -1576,7 +1569,6 @@
           "playthroughs"
         ],
         "summary": "Update Playthrough",
-        "description": "Update a playthrough with business rules and valid status transitions.",
         "operationId": "update_playthrough_api_v1_playthroughs__playthrough_id__put",
         "parameters": [
           {
@@ -1659,7 +1651,6 @@
           "playthroughs"
         ],
         "summary": "Delete Playthrough",
-        "description": "Delete a playthrough record.",
         "operationId": "delete_playthrough_api_v1_playthroughs__playthrough_id__delete",
         "parameters": [
           {
@@ -1734,7 +1725,6 @@
           "playthroughs"
         ],
         "summary": "Complete Playthrough",
-        "description": "Mark playthrough as completed with final details.",
         "operationId": "complete_playthrough_api_v1_playthroughs__playthrough_id__complete_post",
         "parameters": [
           {
@@ -1819,7 +1809,6 @@
           "playthroughs"
         ],
         "summary": "Bulk Playthrough Operations",
-        "description": "Perform bulk operations on multiple playthroughs.",
         "operationId": "bulk_playthrough_operations_api_v1_playthroughs_bulk_post",
         "parameters": [
           {

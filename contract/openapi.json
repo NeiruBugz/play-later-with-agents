@@ -1063,6 +1063,80 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Create Playthrough",
+        "description": "Create a new playthrough for the authenticated user.",
+        "operationId": "create_playthrough_api_v1_playthroughs_post",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaythroughCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/": {
@@ -1859,6 +1933,132 @@
         ],
         "title": "HealthResponse"
       },
+      "PlaythroughCreate": {
+        "properties": {
+          "game_id": {
+            "type": "string",
+            "title": "Game Id",
+            "description": "Game ID for the playthrough"
+          },
+          "collection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Id",
+            "description": "Optional collection item ID"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlaythroughStatus",
+            "description": "Playthrough status"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform",
+            "description": "Gaming platform"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At",
+            "description": "When the playthrough was started"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "When the playthrough was completed"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours",
+            "description": "Play time in hours"
+          },
+          "playthrough_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playthrough Type",
+            "description": "Type of playthrough (e.g., 'First Run', '100% Completion')"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty",
+            "description": "Difficulty level"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Personal rating (1-10)"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes",
+            "description": "Personal notes about the playthrough"
+          }
+        },
+        "type": "object",
+        "required": [
+          "game_id",
+          "status",
+          "platform"
+        ],
+        "title": "PlaythroughCreate"
+      },
       "PlaythroughListItem": {
         "properties": {
           "id": {
@@ -2036,6 +2236,143 @@
           "offset"
         ],
         "title": "PlaythroughListResponse"
+      },
+      "PlaythroughResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "game_id": {
+            "type": "string",
+            "title": "Game Id"
+          },
+          "collection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PlaythroughStatus"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours"
+          },
+          "playthrough_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playthrough Type"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "game_id",
+          "status",
+          "platform",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PlaythroughResponse"
       },
       "PlaythroughSortBy": {
         "type": "string",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Response, status
@@ -15,6 +15,8 @@ from app.db_models import Playthrough, Game, CollectionItem
 from app.schemas import (
     PlaythroughListResponse,
     PlaythroughListItem,
+    PlaythroughCreate,
+    PlaythroughResponse,
     PlaythroughSortBy,
     PlaythroughStatus,
     GameSummary,
@@ -280,3 +282,106 @@ async def list_playthroughs(
             "sort_order": sort_order.value,
         },
     )
+
+
+@router.post(
+    "", response_model=PlaythroughResponse, status_code=status.HTTP_201_CREATED
+)
+async def create_playthrough(
+    playthrough_data: PlaythroughCreate,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughResponse:
+    """Create a new playthrough for the authenticated user."""
+
+    logger.info(
+        f"User {current_user.id} creating playthrough for game {playthrough_data.game_id}"
+    )
+
+    # Validate that the game exists
+    game = db.query(Game).filter(Game.id == playthrough_data.game_id).first()
+    if not game:
+        logger.warning(
+            f"Game {playthrough_data.game_id} not found for user {current_user.id}"
+        )
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Validate collection item if provided
+    collection_item = None
+    if playthrough_data.collection_id:
+        collection_item = (
+            db.query(CollectionItem)
+            .filter(
+                and_(
+                    CollectionItem.id == playthrough_data.collection_id,
+                    CollectionItem.user_id == current_user.id,
+                )
+            )
+            .first()
+        )
+
+        if not collection_item:
+            logger.warning(
+                f"Collection item {playthrough_data.collection_id} not found for user {current_user.id}"
+            )
+            raise HTTPException(status_code=404, detail="Collection item not found")
+
+        # Validate that collection item is for the same game
+        if collection_item.game_id != playthrough_data.game_id:
+            logger.warning(
+                f"Collection item {playthrough_data.collection_id} is for game {collection_item.game_id}, "
+                f"but playthrough is for game {playthrough_data.game_id}"
+            )
+            raise HTTPException(
+                status_code=400, detail="Collection item is for a different game"
+            )
+
+    # Create the playthrough
+    playthrough = Playthrough(
+        id=str(uuid4()),
+        user_id=current_user.id,
+        game_id=playthrough_data.game_id,
+        collection_id=playthrough_data.collection_id,
+        status=playthrough_data.status.value,
+        platform=playthrough_data.platform,
+        started_at=playthrough_data.started_at,
+        completed_at=playthrough_data.completed_at,
+        play_time_hours=playthrough_data.play_time_hours,
+        playthrough_type=playthrough_data.playthrough_type,
+        difficulty=playthrough_data.difficulty,
+        rating=playthrough_data.rating,
+        notes=playthrough_data.notes,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    try:
+        db.add(playthrough)
+        db.commit()
+        db.refresh(playthrough)
+
+        logger.info(f"Created playthrough {playthrough.id} for user {current_user.id}")
+
+        # Return the created playthrough
+        return PlaythroughResponse(
+            id=playthrough.id,
+            user_id=playthrough.user_id,
+            game_id=playthrough.game_id,
+            collection_id=playthrough.collection_id,
+            status=PlaythroughStatus(playthrough.status),
+            platform=playthrough.platform,
+            started_at=playthrough.started_at,
+            completed_at=playthrough.completed_at,
+            play_time_hours=playthrough.play_time_hours,
+            playthrough_type=playthrough.playthrough_type,
+            difficulty=playthrough.difficulty,
+            rating=playthrough.rating,
+            notes=playthrough.notes,
+            created_at=playthrough.created_at,
+            updated_at=playthrough.updated_at,
+        )
+
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"Database error creating playthrough: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create playthrough")

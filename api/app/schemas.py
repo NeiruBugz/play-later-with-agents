@@ -155,6 +155,52 @@ class CollectionStats(BaseModel):
     recent_additions: Optional[list[dict]] = None
 
 
+class PlaythroughCreate(BaseModel):
+    game_id: str = Field(..., description="Game ID for the playthrough")
+    collection_id: Optional[str] = Field(
+        None, description="Optional collection item ID"
+    )
+    status: PlaythroughStatus = Field(..., description="Playthrough status")
+    platform: str = Field(..., description="Gaming platform")
+    started_at: Optional[datetime] = Field(
+        None, description="When the playthrough was started"
+    )
+    completed_at: Optional[datetime] = Field(
+        None, description="When the playthrough was completed"
+    )
+    play_time_hours: Optional[float] = Field(
+        default=None, ge=0, description="Play time in hours"
+    )
+    playthrough_type: Optional[str] = Field(
+        None, description="Type of playthrough (e.g., 'First Run', '100% Completion')"
+    )
+    difficulty: Optional[str] = Field(None, description="Difficulty level")
+    rating: Optional[int] = Field(
+        default=None, ge=1, le=10, description="Personal rating (1-10)"
+    )
+    notes: Optional[str] = Field(
+        None, description="Personal notes about the playthrough"
+    )
+
+
+class PlaythroughResponse(BaseModel):
+    id: str
+    user_id: str
+    game_id: str
+    collection_id: Optional[str] = None
+    status: PlaythroughStatus
+    platform: str
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    play_time_hours: Optional[float] = Field(default=None, ge=0)
+    playthrough_type: Optional[str] = None
+    difficulty: Optional[str] = None
+    rating: Optional[int] = Field(default=None, ge=1, le=10)
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class PlaythroughBase(BaseModel):
     id: str
     user_id: str

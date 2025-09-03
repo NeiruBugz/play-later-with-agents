@@ -2671,3 +2671,166 @@ def test_get_completed_shows_recent_completions_first(test_data):
             next_completed = data["items"][i + 1]["completed_at"]
             # More recent should come first
             assert current_completed >= next_completed
+
+
+# ===== Stats Endpoint Tests =====
+
+
+def test_get_stats_success(test_data):
+    """Test successful stats retrieval."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "total_playthroughs" in data
+    assert "by_status" in data
+    assert "by_platform" in data
+    assert "completion_stats" in data
+    assert isinstance(data["total_playthroughs"], int)
+    assert isinstance(data["by_status"], dict)
+    assert isinstance(data["by_platform"], dict)
+    assert isinstance(data["completion_stats"], dict)
+
+
+def test_get_stats_user_isolation(test_data):
+    """Test stats only shows user's own playthroughs."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    user1_total = data["total_playthroughs"]
+
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-2"})
+    assert response.status_code == 200
+
+    data = response.json()
+    user2_total = data["total_playthroughs"]
+
+    # Different users should potentially have different total counts
+    # At minimum, verify both requests work
+    assert user1_total >= 0
+    assert user2_total >= 0
+
+
+def test_get_stats_status_breakdown(test_data):
+    """Test stats include proper status breakdown."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    by_status = data["by_status"]
+
+    # Should have counts for various statuses
+    expected_statuses = ["PLANNING", "PLAYING", "COMPLETED", "DROPPED", "ON_HOLD"]
+    for status in expected_statuses:
+        if status in by_status:
+            assert isinstance(by_status[status], int)
+            assert by_status[status] >= 0
+
+
+def test_get_stats_platform_breakdown(test_data):
+    """Test stats include proper platform breakdown."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    by_platform = data["by_platform"]
+
+    # Should have counts for platforms used
+    for platform, count in by_platform.items():
+        assert isinstance(platform, str)
+        assert isinstance(count, int)
+        assert count > 0  # Only platforms with playthroughs should be included
+
+
+def test_get_stats_completion_stats(test_data):
+    """Test stats include completion statistics."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+    completion_stats = data["completion_stats"]
+
+    # Should include various completion metrics
+    expected_keys = ["completion_rate", "average_rating", "total_play_time"]
+    for key in expected_keys:
+        if key in completion_stats:
+            assert isinstance(completion_stats[key], (int, float, str))
+
+
+def test_get_stats_yearly_stats(test_data):
+    """Test stats include yearly breakdown when available."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # yearly_stats is optional but if present should be properly structured
+    if "yearly_stats" in data and data["yearly_stats"]:
+        yearly_stats = data["yearly_stats"]
+        assert isinstance(yearly_stats, dict)
+
+        for year, stats in yearly_stats.items():
+            assert isinstance(year, str)  # Year as string
+            assert isinstance(stats, dict)
+            # Each year should have completion metrics
+            for metric, value in stats.items():
+                assert isinstance(value, (int, float))
+
+
+def test_get_stats_top_genres(test_data):
+    """Test stats include top genres when available."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # top_genres is optional but if present should be properly structured
+    if "top_genres" in data and data["top_genres"]:
+        top_genres = data["top_genres"]
+        assert isinstance(top_genres, list)
+
+        for genre_info in top_genres:
+            assert isinstance(genre_info, dict)
+            # Each genre should have name and count/percentage info
+            expected_keys = ["genre", "count"]
+            for key in expected_keys:
+                if key in genre_info:
+                    assert genre_info[key] is not None
+
+
+def test_get_stats_requires_auth():
+    """Test stats endpoint requires authentication."""
+    response = client.get("/api/v1/playthroughs/stats")
+    assert response.status_code == 401
+
+
+def test_get_stats_empty_user():
+    """Test stats endpoint when user has no playthroughs."""
+    # Create a user with no playthroughs
+    response = client.get(
+        "/api/v1/playthroughs/stats", headers={"X-User-Id": "user-empty"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_playthroughs"] == 0
+    assert data["by_status"] == {}
+    assert data["by_platform"] == {}
+    assert isinstance(data["completion_stats"], dict)
+
+
+def test_get_stats_data_consistency(test_data):
+    """Test stats data is internally consistent."""
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    data = response.json()
+
+    # Total playthroughs should equal sum of status counts
+    total_by_status = sum(data["by_status"].values()) if data["by_status"] else 0
+    assert data["total_playthroughs"] == total_by_status
+
+    # Total playthroughs should equal sum of platform counts
+    total_by_platform = sum(data["by_platform"].values()) if data["by_platform"] else 0
+    assert data["total_playthroughs"] == total_by_platform

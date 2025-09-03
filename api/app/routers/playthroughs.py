@@ -41,6 +41,7 @@ from app.schemas import (
     PlayingResponse,
     CompletedItem,
     CompletedResponse,
+    PlaythroughStats,
 )
 
 import logging
@@ -693,6 +694,115 @@ async def get_completed(
         logger.error(f"Error getting completed games for user {current_user.id}: {e}")
         raise HTTPException(
             status_code=500, detail="Failed to retrieve completed games"
+        )
+
+
+@router.get("/stats", response_model=PlaythroughStats)
+async def get_stats(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughStats:
+    """Get comprehensive playthrough statistics for the user."""
+    logger.info(f"Getting playthrough stats for user {current_user.id}")
+
+    try:
+        # Get all user's playthroughs
+        playthroughs = (
+            db.query(Playthrough).filter(Playthrough.user_id == current_user.id).all()
+        )
+
+        total_playthroughs = len(playthroughs)
+
+        # Calculate status breakdown
+        by_status = {}
+        for playthrough in playthroughs:
+            status = (
+                playthrough.status.value
+                if hasattr(playthrough.status, "value")
+                else playthrough.status
+            )
+            by_status[status] = by_status.get(status, 0) + 1
+
+        # Calculate platform breakdown
+        by_platform = {}
+        for playthrough in playthroughs:
+            platform = playthrough.platform
+            by_platform[platform] = by_platform.get(platform, 0) + 1
+
+        # Calculate completion statistics
+        completed_playthroughs = [
+            p
+            for p in playthroughs
+            if p.status in [PlaythroughStatus.COMPLETED, PlaythroughStatus.MASTERED]
+        ]
+
+        completion_stats = {}
+        if total_playthroughs > 0:
+            completion_rate = (len(completed_playthroughs) / total_playthroughs) * 100
+            completion_stats["completion_rate"] = round(completion_rate, 2)
+        else:
+            completion_stats["completion_rate"] = 0.0
+
+        # Calculate average rating for completed playthroughs with ratings
+        completed_with_rating = [
+            p for p in completed_playthroughs if p.rating is not None
+        ]
+        if completed_with_rating:
+            avg_rating = sum(p.rating for p in completed_with_rating) / len(
+                completed_with_rating
+            )
+            completion_stats["average_rating"] = round(avg_rating, 2)
+
+        # Calculate total play time
+        playthroughs_with_time = [
+            p for p in playthroughs if p.play_time_hours is not None
+        ]
+        if playthroughs_with_time:
+            total_time = sum(p.play_time_hours for p in playthroughs_with_time)
+            completion_stats["total_play_time"] = round(total_time, 2)
+            completion_stats["average_play_time"] = round(
+                total_time / len(playthroughs_with_time), 2
+            )
+
+        # Calculate yearly stats (optional)
+        yearly_stats = {}
+        for playthrough in completed_playthroughs:
+            if playthrough.completed_at:
+                year = str(playthrough.completed_at.year)
+                if year not in yearly_stats:
+                    yearly_stats[year] = {"completed": 0, "total_time": 0.0}
+
+                yearly_stats[year]["completed"] += 1
+                if playthrough.play_time_hours:
+                    yearly_stats[year]["total_time"] += playthrough.play_time_hours
+
+        # Round yearly stats
+        for year_data in yearly_stats.values():
+            year_data["total_time"] = round(year_data["total_time"], 2)
+
+        # Top genres placeholder (would require game genre data)
+        # Since our current Game model doesn't have genre information,
+        # we'll return None for now
+        top_genres = None
+
+        logger.info(
+            f"Generated stats for user {current_user.id}: {total_playthroughs} playthroughs, "
+            f"{len(completed_playthroughs)} completed"
+        )
+
+        return PlaythroughStats(
+            total_playthroughs=total_playthroughs,
+            by_status=by_status,
+            by_platform=by_platform,
+            completion_stats=completion_stats,
+            yearly_stats=yearly_stats if yearly_stats else None,
+            top_genres=top_genres,
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting playthrough stats for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=500, detail="Failed to retrieve playthrough statistics"
         )
 
 

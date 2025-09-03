@@ -1431,6 +1431,72 @@
         }
       }
     },
+    "/api/v1/playthroughs/stats": {
+      "get": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Get Stats",
+        "description": "Get comprehensive playthrough statistics for the user.",
+        "operationId": "get_stats_api_v1_playthroughs_stats_get",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/playthroughs/{playthrough_id}": {
       "get": {
         "tags": [
@@ -3756,6 +3822,101 @@
           "platform"
         ],
         "title": "PlaythroughSortBy"
+      },
+      "PlaythroughStats": {
+        "properties": {
+          "total_playthroughs": {
+            "type": "integer",
+            "title": "Total Playthroughs"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "by_platform": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Platform"
+          },
+          "completion_stats": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Completion Stats"
+          },
+          "yearly_stats": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yearly Stats"
+          },
+          "top_genres": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Genres"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_playthroughs",
+          "by_status",
+          "by_platform",
+          "completion_stats"
+        ],
+        "title": "PlaythroughStats"
       },
       "PlaythroughStatus": {
         "type": "string",

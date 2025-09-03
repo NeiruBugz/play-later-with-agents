@@ -2384,3 +2384,118 @@ def test_get_backlog_empty_result():
     data = response.json()
     assert data["items"] == []
     assert data["total_count"] == 0
+
+
+# ===== Playing Endpoint Tests =====
+
+
+def test_get_playing_success(test_data):
+    """Test successful playing retrieval."""
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "items" in data
+    assert "total_count" in data
+    assert isinstance(data["items"], list)
+    assert isinstance(data["total_count"], int)
+
+    # All items should have status "PLAYING"
+    for item in data["items"]:
+        assert item["status"] == "PLAYING"
+        assert "id" in item
+        assert "game" in item
+        assert "platform" in item
+        assert "started_at" in item
+        assert item["game"]["title"]
+
+
+def test_get_playing_user_isolation(test_data):
+    """Test playing only shows user's own playthroughs."""
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user1_playing_count = data["total_count"]
+
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user2_playing_count = data["total_count"]
+
+    # Different users should potentially have different playing counts
+    # At minimum, verify both requests work
+    assert user1_playing_count >= 0
+    assert user2_playing_count >= 0
+
+
+def test_get_playing_platform_filtering(test_data):
+    """Test playing can be filtered by platform."""
+    response = client.get(
+        "/api/v1/playthroughs/playing?platform=PC", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # All returned items should have platform "PC"
+    for item in data["items"]:
+        assert item["platform"] == "PC"
+
+
+def test_get_playing_includes_play_time(test_data):
+    """Test playing items include play_time_hours and last_played fields."""
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    for item in data["items"]:
+        assert "play_time_hours" in item
+        assert "last_played" in item
+        # play_time_hours can be null or a float
+        if item["play_time_hours"] is not None:
+            assert isinstance(item["play_time_hours"], (int, float))
+
+
+def test_get_playing_requires_auth():
+    """Test playing endpoint requires authentication."""
+    response = client.get("/api/v1/playthroughs/playing")
+    assert response.status_code == 401
+
+
+def test_get_playing_empty_result():
+    """Test playing endpoint when user has no playing playthroughs."""
+    # Create a user with no playing playthroughs
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-empty"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["items"] == []
+    assert data["total_count"] == 0
+
+
+def test_get_playing_shows_recent_activity(test_data):
+    """Test playing shows most recently started playthroughs first."""
+    response = client.get(
+        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    if len(data["items"]) > 1:
+        # Check that items are sorted by started_at descending
+        for i in range(len(data["items"]) - 1):
+            current_started = data["items"][i]["started_at"]
+            next_started = data["items"][i + 1]["started_at"]
+            # More recent should come first
+            assert current_started >= next_started

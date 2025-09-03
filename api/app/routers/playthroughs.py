@@ -37,6 +37,8 @@ from app.schemas import (
     SortOrder,
     BacklogItem,
     BacklogResponse,
+    PlayingItem,
+    PlayingResponse,
 )
 
 import logging
@@ -495,6 +497,83 @@ async def get_backlog(
     except Exception as e:
         logger.error(f"Error getting backlog for user {current_user.id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve backlog")
+
+
+@router.get("/playing", response_model=PlayingResponse)
+async def get_playing(
+    platform: Optional[str] = Query(None, description="Filter by platform"),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlayingResponse:
+    """Get user's currently playing games (playing status playthroughs)."""
+    logger.info(f"Getting playing games for user {current_user.id}")
+
+    # Build query for playing playthroughs
+    query = (
+        db.query(Playthrough)
+        .filter(
+            Playthrough.user_id == current_user.id,
+            Playthrough.status == PlaythroughStatus.PLAYING,
+        )
+        .join(Game, Playthrough.game_id == Game.id)
+    )
+
+    # Apply platform filter if specified
+    if platform is not None:
+        query = query.filter(Playthrough.platform == platform)
+
+    # Order by started_at descending (most recently started first)
+    query = query.order_by(Playthrough.started_at.desc())
+
+    try:
+        # Execute query with proper joins
+        results = query.all()
+
+        # Convert to response format
+        playing_items = []
+        for playthrough in results:
+            # Get the game from the join
+            game = db.query(Game).filter(Game.id == playthrough.game_id).first()
+            if not game:
+                continue
+
+            # Get game details
+            game_summary = GameSummary(
+                id=game.id,
+                title=game.title,
+                cover_image_id=game.cover_image_id,
+                release_date=game.release_date,
+                main_story=None,  # Not available in current Game model
+                main_extra=None,  # Not available in current Game model
+                completionist=None,  # Not available in current Game model
+            )
+
+            # Calculate last_played (use updated_at as a proxy for last activity)
+            last_played = playthrough.updated_at
+
+            playing_item = PlayingItem(
+                id=playthrough.id,
+                game=game_summary,
+                status="PLAYING",
+                platform=playthrough.platform,
+                started_at=playthrough.started_at,
+                play_time_hours=playthrough.play_time_hours,
+                last_played=last_played,
+            )
+            playing_items.append(playing_item)
+
+        logger.info(
+            f"Found {len(playing_items)} playing items for user {current_user.id}"
+        )
+
+        return PlayingResponse(
+            items=playing_items,
+            total_count=len(playing_items),
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting playing games for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve playing games")
 
 
 @router.get("/{playthrough_id}", response_model=PlaythroughDetail)

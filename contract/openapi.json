@@ -1225,6 +1225,90 @@
         }
       }
     },
+    "/api/v1/playthroughs/playing": {
+      "get": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Get Playing",
+        "description": "Get user's currently playing games (playing status playthroughs).",
+        "operationId": "get_playing_api_v1_playthroughs_playing_get",
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by platform",
+              "title": "Platform"
+            },
+            "description": "Filter by platform"
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/playthroughs/{playthrough_id}": {
       "get": {
         "tags": [
@@ -2579,6 +2663,84 @@
           "achieved_at"
         ],
         "title": "Milestone"
+      },
+      "PlayingItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "game": {
+            "$ref": "#/components/schemas/GameSummary"
+          },
+          "status": {
+            "type": "string",
+            "const": "PLAYING",
+            "title": "Status",
+            "default": "PLAYING"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "play_time_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Time Hours"
+          },
+          "last_played": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Played"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "game",
+          "platform",
+          "started_at"
+        ],
+        "title": "PlayingItem"
+      },
+      "PlayingResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PlayingItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total_count"
+        ],
+        "title": "PlayingResponse"
       },
       "PlaythroughBulkRequest": {
         "properties": {

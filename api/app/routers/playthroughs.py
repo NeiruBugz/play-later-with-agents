@@ -18,6 +18,7 @@ from app.schemas import (
     PlaythroughCreate,
     PlaythroughUpdate,
     PlaythroughComplete,
+    PlaythroughDeleteResponse,
     PlaythroughResponse,
     PlaythroughDetail,
     PlaythroughSortBy,
@@ -719,3 +720,47 @@ async def complete_playthrough(
         db.rollback()
         logger.error(f"Database error completing playthrough: {e}")
         raise HTTPException(status_code=500, detail="Failed to complete playthrough")
+
+
+@router.delete("/{playthrough_id}", response_model=PlaythroughDeleteResponse)
+async def delete_playthrough(
+    playthrough_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PlaythroughDeleteResponse:
+    """Delete a playthrough record."""
+
+    logger.info(f"User {current_user.id} deleting playthrough {playthrough_id}")
+
+    # Find the existing playthrough
+    existing_playthrough = (
+        db.query(Playthrough)
+        .filter(
+            and_(
+                Playthrough.id == playthrough_id, Playthrough.user_id == current_user.id
+            )
+        )
+        .first()
+    )
+
+    if not existing_playthrough:
+        logger.warning(
+            f"Playthrough {playthrough_id} not found for user {current_user.id}"
+        )
+        raise HTTPException(status_code=404, detail="Playthrough not found")
+
+    try:
+        # Delete the playthrough from the database
+        db.delete(existing_playthrough)
+        db.commit()
+
+        logger.info(f"Deleted playthrough {playthrough_id} for user {current_user.id}")
+
+        return PlaythroughDeleteResponse(
+            success=True, message="Playthrough deleted successfully"
+        )
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Database error deleting playthrough: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete playthrough")

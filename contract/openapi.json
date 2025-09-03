@@ -1295,6 +1295,79 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "playthroughs"
+        ],
+        "summary": "Delete Playthrough",
+        "description": "Delete a playthrough record.",
+        "operationId": "delete_playthrough_api_v1_playthroughs__playthrough_id__delete",
+        "parameters": [
+          {
+            "name": "playthrough_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Playthrough Id"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "session_user",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaythroughDeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/playthroughs/{playthrough_id}/complete": {
@@ -2395,6 +2468,26 @@
           "platform"
         ],
         "title": "PlaythroughCreate"
+      },
+      "PlaythroughDeleteResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether the deletion was successful"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Success message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "PlaythroughDeleteResponse"
       },
       "PlaythroughDetail": {
         "properties": {

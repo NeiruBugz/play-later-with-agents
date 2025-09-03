@@ -224,6 +224,11 @@ class PlaythroughComplete(BaseModel):
     )
 
 
+class PlaythroughDeleteResponse(BaseModel):
+    success: bool = Field(..., description="Whether the deletion was successful")
+    message: str = Field(..., description="Success message")
+
+
 class PlaythroughResponse(BaseModel):
     id: str
     user_id: str

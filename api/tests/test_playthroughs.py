@@ -1764,3 +1764,161 @@ def test_complete_playthrough_missing_required_field(test_data):
         headers={"X-User-Id": "user-1"},
     )
     assert response.status_code == 422
+
+
+# ===== DELETE /playthroughs/{id} Tests =====
+
+
+def test_delete_playthrough_requires_auth():
+    """Test that deleting playthrough requires authentication."""
+    response = client.delete("/api/v1/playthroughs/pt-1")
+    assert response.status_code == 401
+    assert response.json()["error"] == "authentication_required"
+
+
+def test_delete_playthrough_success(test_data):
+    """Test successfully deleting a playthrough."""
+    # First, verify the playthrough exists
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    # Delete the playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+    assert "deleted successfully" in data["message"].lower()
+
+    # Verify the playthrough is gone
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 404
+
+
+def test_delete_playthrough_not_found(test_data):
+    """Test deleting non-existent playthrough."""
+    response = client.delete(
+        "/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_delete_playthrough_user_isolation(test_data):
+    """Test users cannot delete other users' playthroughs."""
+    # Try to delete user-1's playthrough as user-2
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+    # Verify user-1's playthrough still exists
+    response = client.get("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+
+    # User-2 can delete their own playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["success"] is True
+
+
+def test_delete_playthrough_removes_from_list(test_data):
+    """Test that deleted playthrough is removed from user's list."""
+    # Get initial count
+    response = client.get("/api/v1/playthroughs", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    initial_count = response.json()["total_count"]
+
+    # Delete a playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Verify count is reduced by 1
+    response = client.get("/api/v1/playthroughs", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    final_count = response.json()["total_count"]
+    assert final_count == initial_count - 1
+
+    # Verify the specific playthrough is not in the list
+    items = response.json()["items"]
+    playthrough_ids = [item["id"] for item in items]
+    assert "pt-2" not in playthrough_ids
+
+
+def test_delete_playthrough_different_statuses(test_data):
+    """Test deleting playthroughs in different statuses."""
+    # Delete completed playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Delete playing playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Delete planning playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Delete dropped playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Delete on hold playthrough
+    response = client.delete(
+        "/api/v1/playthroughs/pt-5", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Verify all are gone
+    response = client.get("/api/v1/playthroughs", headers={"X-User-Id": "user-1"})
+    assert response.status_code == 200
+    assert response.json()["total_count"] == 0
+
+
+def test_delete_playthrough_twice(test_data):
+    """Test that deleting the same playthrough twice returns 404."""
+    # First delete should succeed
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    # Second delete should return 404
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 404
+    assert "Playthrough not found" in response.json()["message"]
+
+
+def test_delete_playthrough_response_format(test_data):
+    """Test that delete response has correct format."""
+    response = client.delete(
+        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # Verify required fields are present
+    assert "success" in data
+    assert "message" in data
+    assert isinstance(data["success"], bool)
+    assert isinstance(data["message"], str)
+    assert data["success"] is True

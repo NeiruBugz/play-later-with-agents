@@ -116,17 +116,17 @@
 - Validate: 422 on invalid transitions; 200 on valid; timestamps logic.
 - Commit: `feat(api): update playthrough with rules`
 
-### Task 19 – POST /playthroughs/{id}/complete
+### [x] Task 19 – POST /playthroughs/{id}/complete
 - Finalize with completion details and types.
 - Validate: 200; 409 if already completed; data persisted.
 - Commit: `feat(api): complete playthrough`
 
-### Task 20 – DELETE /playthroughs/{id}
+### [x] Task 20 – DELETE /playthroughs/{id}
 - Delete record.
 - Validate: 200/404.
 - Commit: `feat(api): delete playthrough`
 
-### Task 21 – POST /playthroughs/bulk
+### [x] Task 21 – POST /playthroughs/bulk
 - Implement bulk actions (status, platform, add_time, delete).
 - Validate: 200/207 and per-item outcomes.
 - Commit: `feat(api): bulk playthrough operations`

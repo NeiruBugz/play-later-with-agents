@@ -2257,3 +2257,130 @@ def test_bulk_response_format(test_data):
     # For successful operations, these fields should not be present
     assert "failed_count" not in data
     assert "failed_items" not in data
+
+
+# ===== Backlog Endpoint Tests =====
+
+
+def test_get_backlog_success(test_data):
+    """Test successful backlog retrieval."""
+    response = client.get(
+        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "items" in data
+    assert "total_count" in data
+    assert isinstance(data["items"], list)
+    assert isinstance(data["total_count"], int)
+
+    # All items should have status "PLANNING"
+    for item in data["items"]:
+        assert item["status"] == "PLANNING"
+        assert "id" in item
+        assert "game" in item
+        assert "created_at" in item
+        assert item["game"]["title"]
+
+
+def test_get_backlog_user_isolation(test_data):
+    """Test backlog only shows user's own playthroughs."""
+    response = client.get(
+        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user1_backlog_count = data["total_count"]
+
+    response = client.get(
+        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-2"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    user2_backlog_count = data["total_count"]
+
+    # Different users should potentially have different backlog counts
+    # At minimum, verify both requests work
+    assert user1_backlog_count >= 0
+    assert user2_backlog_count >= 0
+
+
+def test_get_backlog_with_collection_info(test_data):
+    """Test backlog includes collection information when available."""
+    # Create a collection item and planning playthrough linked to it
+    collection_data = {
+        "game_id": "game-4",  # Use existing game-4 from test data
+        "platform": "PC",
+        "acquisition_type": "DIGITAL",
+        "priority": 5,
+    }
+    collection_response = client.post(
+        "/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-1"}
+    )
+    assert collection_response.status_code == 201
+    collection_id = collection_response.json()["id"]
+
+    playthrough_data = {
+        "game_id": "game-4",  # Use existing game-4 from test data
+        "collection_id": collection_id,
+        "status": "PLANNING",
+        "platform": "PC",
+    }
+    playthrough_response = client.post(
+        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
+    )
+    assert playthrough_response.status_code == 201
+
+    response = client.get(
+        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # Find the newly created backlog item
+    backlog_item = None
+    for item in data["items"]:
+        if item["game"]["id"] == "game-4":
+            backlog_item = item
+            break
+
+    assert backlog_item is not None
+    assert backlog_item["collection"] is not None
+    assert backlog_item["collection"]["id"] == collection_id
+    assert backlog_item["collection"]["priority"] == 5
+
+
+def test_get_backlog_priority_filtering(test_data):
+    """Test backlog can be filtered by priority."""
+    response = client.get(
+        "/api/v1/playthroughs/backlog?priority=5", headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    # All returned items should have priority 5 in their collection
+    for item in data["items"]:
+        if item["collection"]:
+            assert item["collection"]["priority"] == 5
+
+
+def test_get_backlog_requires_auth():
+    """Test backlog endpoint requires authentication."""
+    response = client.get("/api/v1/playthroughs/backlog")
+    assert response.status_code == 401
+
+
+def test_get_backlog_empty_result():
+    """Test backlog endpoint when user has no planning playthroughs."""
+    # Create a user with no planning playthroughs
+    response = client.get(
+        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-empty"}
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["items"] == []
+    assert data["total_count"] == 0

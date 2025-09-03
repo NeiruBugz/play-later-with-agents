@@ -35,6 +35,8 @@ from app.schemas import (
     CollectionSnippet,
     AcquisitionType,
     SortOrder,
+    BacklogItem,
+    BacklogResponse,
 )
 
 import logging
@@ -397,6 +399,102 @@ async def create_playthrough(
         db.rollback()
         logger.error(f"Database error creating playthrough: {e}")
         raise HTTPException(status_code=500, detail="Failed to create playthrough")
+
+
+# ===== Convenience Endpoints =====
+
+
+@router.get("/backlog", response_model=BacklogResponse)
+async def get_backlog(
+    priority: Optional[int] = Query(
+        None, ge=1, le=5, description="Filter by collection priority"
+    ),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BacklogResponse:
+    """Get user's backlog (planning status playthroughs)."""
+    logger.info(f"Getting backlog for user {current_user.id}")
+
+    # Build query for planning playthroughs
+    query = (
+        db.query(Playthrough)
+        .filter(
+            Playthrough.user_id == current_user.id,
+            Playthrough.status == PlaythroughStatus.PLANNING,
+        )
+        .join(Game, Playthrough.game_id == Game.id)
+        .outerjoin(CollectionItem, Playthrough.collection_id == CollectionItem.id)
+    )
+
+    # Apply priority filter if specified
+    if priority is not None:
+        query = query.filter(CollectionItem.priority == priority)
+
+    # Order by created_at descending (most recent first)
+    query = query.order_by(Playthrough.created_at.desc())
+
+    try:
+        # Execute query with proper joins
+        results = query.all()
+
+        # Convert to response format
+        backlog_items = []
+        for playthrough in results:
+            # Get the game from the join
+            game = db.query(Game).filter(Game.id == playthrough.game_id).first()
+            if not game:
+                continue
+
+            # Get game details
+            game_summary = GameSummary(
+                id=game.id,
+                title=game.title,
+                cover_image_id=game.cover_image_id,
+                release_date=game.release_date,
+                main_story=None,  # Not available in current Game model
+                main_extra=None,  # Not available in current Game model
+                completionist=None,  # Not available in current Game model
+            )
+
+            # Get collection details if linked
+            collection_snippet = None
+            if playthrough.collection_id:
+                collection = (
+                    db.query(CollectionItem)
+                    .filter(CollectionItem.id == playthrough.collection_id)
+                    .first()
+                )
+                if collection:
+                    collection_snippet = CollectionSnippet(
+                        id=collection.id,
+                        platform=collection.platform,
+                        acquisition_type=collection.acquisition_type,
+                        acquired_at=collection.acquired_at,
+                        priority=collection.priority,
+                        is_active=collection.is_active,
+                    )
+
+            backlog_item = BacklogItem(
+                id=playthrough.id,
+                game=game_summary,
+                collection=collection_snippet,
+                status="PLANNING",
+                created_at=playthrough.created_at,
+            )
+            backlog_items.append(backlog_item)
+
+        logger.info(
+            f"Found {len(backlog_items)} backlog items for user {current_user.id}"
+        )
+
+        return BacklogResponse(
+            items=backlog_items,
+            total_count=len(backlog_items),
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting backlog for user {current_user.id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve backlog")
 
 
 @router.get("/{playthrough_id}", response_model=PlaythroughDetail)

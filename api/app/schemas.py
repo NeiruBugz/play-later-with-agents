@@ -4,7 +4,9 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_serializer
+
+from app.utils import format_datetime
 
 
 # ===== Enums =====
@@ -79,6 +81,10 @@ class CollectionSnippet(BaseModel):
     priority: Optional[int] = Field(default=None, ge=1, le=5)
     is_active: bool = True
 
+    @field_serializer("acquired_at")
+    def serialize_acquired_at(self, value: Optional[datetime]) -> Optional[str]:
+        return format_datetime(value)
+
 
 class CollectionItemCreate(BaseModel):
     game_id: str = Field(..., description="Game ID to add to collection")
@@ -122,6 +128,10 @@ class CollectionItem(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @field_serializer("acquired_at", "created_at", "updated_at")
+    def serialize_datetimes(self, value: Optional[datetime]) -> Optional[str]:
+        return format_datetime(value)
+
 
 class CollectionItemExpanded(BaseModel):
     id: str
@@ -136,6 +146,10 @@ class CollectionItemExpanded(BaseModel):
     playthroughs: list[dict] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
+
+    @field_serializer("acquired_at", "created_at", "updated_at")
+    def serialize_datetimes(self, value: Optional[datetime]) -> Optional[str]:
+        return format_datetime(value)
 
 
 class CollectionListResponse(BaseModel):
@@ -350,6 +364,10 @@ class PlaythroughResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @field_serializer("started_at", "completed_at", "created_at", "updated_at")
+    def serialize_datetimes(self, value: Optional[datetime]) -> Optional[str]:
+        return format_datetime(value)
+
 
 class PlaythroughBase(BaseModel):
     id: str
@@ -366,6 +384,10 @@ class PlaythroughBase(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @field_serializer("started_at", "completed_at", "created_at", "updated_at")
+    def serialize_datetimes(self, value: Optional[datetime]) -> Optional[str]:
+        return format_datetime(value)
+
 
 class PlaythroughListItem(PlaythroughBase):
     game: GameSummary
@@ -375,6 +397,10 @@ class PlaythroughListItem(PlaythroughBase):
 class Milestone(BaseModel):
     name: str
     achieved_at: datetime
+
+    @field_serializer("achieved_at")
+    def serialize_achieved_at(self, value: datetime) -> str:
+        return format_datetime(value)
 
 
 class PlaythroughDetail(PlaythroughBase):

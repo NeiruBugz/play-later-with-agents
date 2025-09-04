@@ -848,9 +848,21 @@ class PlaythroughsService:
         if bulk_request.action == BulkAction.UPDATE_STATUS:
             if not bulk_request.data or "status" not in bulk_request.data:
                 raise BadRequestError("Status is required for update_status action")
+
+            # Validate that the provided status is a valid enum value
+            status_value = bulk_request.data["status"]
+            valid_statuses = {status.value for status in PlaythroughStatus}
+            if status_value not in valid_statuses:
+                raise BadRequestError(
+                    f"Invalid status '{status_value}'. Valid values are: {', '.join(sorted(valid_statuses))}"
+                )
+
         elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
             if not bulk_request.data or "platform" not in bulk_request.data:
                 raise BadRequestError("Platform is required for update_platform action")
+
+            # Note: Platform validation could be added here if a Platform enum is defined in the future
+            # For now, platform accepts any string value as per the current schema
         elif bulk_request.action == BulkAction.ADD_TIME:
             if not bulk_request.data or "hours" not in bulk_request.data:
                 raise BadRequestError("Hours is required for add_time action")

@@ -2318,6 +2318,26 @@ def test_bulk_response_format(test_data):
     assert "failed_items" not in data
 
 
+def test_bulk_invalid_status_enum(test_data):
+    """Test bulk status update with invalid enum value."""
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": ["pt-2"],
+        "data": {
+            "status": "INVALID_STATUS"
+        },  # Not a valid PlaythroughStatus enum value
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 400
+    error_message = response.json()["message"]
+    assert "invalid status" in error_message.lower()
+    assert "invalid_status" in error_message.lower()
+    assert "valid values are:" in error_message.lower()
+
+
 # ===== Backlog Endpoint Tests =====
 
 

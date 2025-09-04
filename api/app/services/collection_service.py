@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import CurrentUser
 from app.db_models import CollectionItem, Game, Playthrough
+from app.utils import format_datetime
 from app.schemas import (
     AcquisitionType,
     BulkCollectionAction,
@@ -119,12 +120,8 @@ class CollectionService:
                         "id": pt.id,
                         "status": pt.status,
                         "platform": pt.platform,
-                        "started_at": pt.started_at.isoformat()
-                        if pt.started_at
-                        else None,
-                        "completed_at": pt.completed_at.isoformat()
-                        if pt.completed_at
-                        else None,
+                        "started_at": format_datetime(pt.started_at),
+                        "completed_at": format_datetime(pt.completed_at),
                         "play_time_hours": pt.play_time_hours,
                         "rating": pt.rating,
                     }
@@ -229,7 +226,7 @@ class CollectionService:
                         "cover_image_id": game.cover_image_id,
                     },
                     "platform": item.platform,
-                    "acquired_at": item.acquired_at.isoformat(),
+                    "acquired_at": format_datetime(item.acquired_at),
                 }
             )
 
@@ -296,10 +293,8 @@ class CollectionService:
                     "id": pt.id,
                     "status": pt.status,
                     "platform": pt.platform,
-                    "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                    "completed_at": pt.completed_at.isoformat()
-                    if pt.completed_at
-                    else None,
+                    "started_at": format_datetime(pt.started_at),
+                    "completed_at": format_datetime(pt.completed_at),
                     "play_time_hours": pt.play_time_hours,
                     "rating": pt.rating,
                 }
@@ -361,10 +356,8 @@ class CollectionService:
                     "id": pt.id,
                     "status": pt.status,
                     "platform": pt.platform,
-                    "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                    "completed_at": pt.completed_at.isoformat()
-                    if pt.completed_at
-                    else None,
+                    "started_at": format_datetime(pt.started_at),
+                    "completed_at": format_datetime(pt.completed_at),
                     "play_time_hours": pt.play_time_hours,
                     "rating": pt.rating,
                 }
@@ -449,10 +442,8 @@ class CollectionService:
                     "id": pt.id,
                     "status": pt.status,
                     "platform": pt.platform,
-                    "started_at": pt.started_at.isoformat() if pt.started_at else None,
-                    "completed_at": pt.completed_at.isoformat()
-                    if pt.completed_at
-                    else None,
+                    "started_at": format_datetime(pt.started_at),
+                    "completed_at": format_datetime(pt.completed_at),
                     "play_time_hours": pt.play_time_hours,
                     "rating": pt.rating,
                 }
@@ -594,7 +585,7 @@ class CollectionService:
                     updated_data["is_active"] = True
 
                 collection_item.updated_at = datetime.now(timezone.utc)
-                updated_data["updated_at"] = collection_item.updated_at.isoformat()
+                updated_data["updated_at"] = format_datetime(collection_item.updated_at)
                 self.db.commit()
                 self.db.refresh(collection_item)
 

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.auth import CurrentUser
 from app.db_models import CollectionItem, Game, Playthrough
+from app.utils import format_datetime
 from app.schemas import (
     AcquisitionType,
     BacklogItem,
@@ -215,14 +216,16 @@ class PlaythroughsService:
                 "play_time_max": play_time_max,
                 "difficulty": difficulty,
                 "playthrough_type": playthrough_type,
-                "started_after": started_after.isoformat() if started_after else None,
-                "started_before": started_before.isoformat()
+                "started_after": format_datetime(started_after)
+                if started_after
+                else None,
+                "started_before": format_datetime(started_before)
                 if started_before
                 else None,
-                "completed_after": completed_after.isoformat()
+                "completed_after": format_datetime(completed_after)
                 if completed_after
                 else None,
-                "completed_before": completed_before.isoformat()
+                "completed_before": format_datetime(completed_before)
                 if completed_before
                 else None,
                 "search": search,

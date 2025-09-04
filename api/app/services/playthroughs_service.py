@@ -90,6 +90,20 @@ class PlaythroughsService:
         ):
             raise ValidationError("play_time_min must be <= play_time_max")
 
+        if (
+            started_after is not None
+            and started_before is not None
+            and started_after > started_before
+        ):
+            raise ValidationError("started_after must be <= started_before")
+
+        if (
+            completed_after is not None
+            and completed_before is not None
+            and completed_after > completed_before
+        ):
+            raise ValidationError("completed_after must be <= completed_before")
+
         query = (
             select(Playthrough, Game, CollectionItem)
             .join(Game, Playthrough.game_id == Game.id)

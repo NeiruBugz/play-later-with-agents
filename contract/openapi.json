@@ -47,7 +47,6 @@
                 }
               ],
               "description": "Filter by platform",
-              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -66,7 +65,6 @@
                 }
               ],
               "description": "Filter by acquisition type",
-              "default": null,
               "title": "Acquisition Type"
             },
             "description": "Filter by acquisition type"
@@ -87,7 +85,6 @@
                 }
               ],
               "description": "Filter by priority (1-5)",
-              "default": null,
               "title": "Priority"
             },
             "description": "Filter by priority (1-5)"
@@ -106,7 +103,6 @@
                 }
               ],
               "description": "Filter by active status",
-              "default": null,
               "title": "Is Active"
             },
             "description": "Filter by active status"
@@ -125,7 +121,6 @@
                 }
               ],
               "description": "Search in game title or notes",
-              "default": null,
               "title": "Search"
             },
             "description": "Search in game title or notes"
@@ -194,7 +189,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -211,7 +205,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -260,7 +253,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -277,7 +269,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -338,7 +329,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -355,7 +345,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -415,7 +404,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -432,7 +420,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -490,7 +477,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -507,7 +493,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -587,7 +572,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -604,7 +588,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -657,7 +640,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -674,7 +656,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -738,7 +719,6 @@
                 }
               ],
               "description": "Filter by playthrough status",
-              "default": null,
               "title": "Status"
             },
             "description": "Filter by playthrough status"
@@ -760,7 +740,6 @@
                 }
               ],
               "description": "Filter by platforms",
-              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platforms"
@@ -781,7 +760,6 @@
                 }
               ],
               "description": "Minimum rating (1-10)",
-              "default": null,
               "title": "Rating Min"
             },
             "description": "Minimum rating (1-10)"
@@ -802,7 +780,6 @@
                 }
               ],
               "description": "Maximum rating (1-10)",
-              "default": null,
               "title": "Rating Max"
             },
             "description": "Maximum rating (1-10)"
@@ -822,7 +799,6 @@
                 }
               ],
               "description": "Minimum play time in hours",
-              "default": null,
               "title": "Play Time Min"
             },
             "description": "Minimum play time in hours"
@@ -842,7 +818,6 @@
                 }
               ],
               "description": "Maximum play time in hours",
-              "default": null,
               "title": "Play Time Max"
             },
             "description": "Maximum play time in hours"
@@ -864,7 +839,6 @@
                 }
               ],
               "description": "Filter by difficulty settings",
-              "default": null,
               "title": "Difficulty"
             },
             "description": "Filter by difficulty settings"
@@ -886,7 +860,6 @@
                 }
               ],
               "description": "Filter by playthrough type",
-              "default": null,
               "title": "Playthrough Type"
             },
             "description": "Filter by playthrough type"
@@ -906,7 +879,6 @@
                 }
               ],
               "description": "Started after date (YYYY-MM-DD)",
-              "default": null,
               "title": "Started After"
             },
             "description": "Started after date (YYYY-MM-DD)"
@@ -926,7 +898,6 @@
                 }
               ],
               "description": "Started before date (YYYY-MM-DD)",
-              "default": null,
               "title": "Started Before"
             },
             "description": "Started before date (YYYY-MM-DD)"
@@ -946,7 +917,6 @@
                 }
               ],
               "description": "Completed after date (YYYY-MM-DD)",
-              "default": null,
               "title": "Completed After"
             },
             "description": "Completed after date (YYYY-MM-DD)"
@@ -966,7 +936,6 @@
                 }
               ],
               "description": "Completed before date (YYYY-MM-DD)",
-              "default": null,
               "title": "Completed Before"
             },
             "description": "Completed before date (YYYY-MM-DD)"
@@ -985,7 +954,6 @@
                 }
               ],
               "description": "Search in game titles and notes",
-              "default": null,
               "title": "Search"
             },
             "description": "Search in game titles and notes"
@@ -1052,7 +1020,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1069,7 +1036,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1117,7 +1083,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1134,7 +1099,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1197,7 +1161,6 @@
                 }
               ],
               "description": "Filter by collection priority",
-              "default": null,
               "title": "Priority"
             },
             "description": "Filter by collection priority"
@@ -1215,7 +1178,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1232,7 +1194,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1283,7 +1244,6 @@
                 }
               ],
               "description": "Filter by platform",
-              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -1301,7 +1261,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1318,7 +1277,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1369,7 +1327,6 @@
                 }
               ],
               "description": "Filter by completion year",
-              "default": null,
               "title": "Year"
             },
             "description": "Filter by completion year"
@@ -1388,7 +1345,6 @@
                 }
               ],
               "description": "Filter by platform",
-              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -1409,7 +1365,6 @@
                 }
               ],
               "description": "Filter by minimum rating",
-              "default": null,
               "title": "Min Rating"
             },
             "description": "Filter by minimum rating"
@@ -1427,7 +1382,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1444,7 +1398,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1494,7 +1447,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1511,7 +1463,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1570,7 +1521,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1587,7 +1537,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1644,7 +1593,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1661,7 +1609,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1728,7 +1675,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1745,7 +1691,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1804,7 +1749,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1821,7 +1765,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }
@@ -1881,7 +1824,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1898,7 +1840,6 @@
                   "type": "null"
                 }
               ],
-              "default": null,
               "title": "Session User"
             }
           }

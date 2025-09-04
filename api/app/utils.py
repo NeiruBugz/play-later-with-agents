@@ -1,6 +1,6 @@
 """Utility functions for the application."""
 
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import Optional, Union
 
 
@@ -36,7 +36,7 @@ def format_datetime(dt: Optional[Union[datetime, date]]) -> Optional[str]:
 
     # For other timezone formats, convert to UTC first
     if dt.tzinfo is not None:
-        utc_dt = dt.utctimetuple()
-        return datetime(*utc_dt[:6]).isoformat() + "Z"
+        utc_dt = dt.astimezone(timezone.utc)
+        return utc_dt.isoformat().replace("+00:00", "Z")
 
     return iso_string

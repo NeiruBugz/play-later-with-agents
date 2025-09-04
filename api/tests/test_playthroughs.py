@@ -1364,10 +1364,10 @@ def test_update_playthrough_invalid_status_transitions(test_data):
     # MASTERED -> PLANNING (invalid - mastered should be final)
     # First create a mastered playthrough
     create_data = {
-        "game_id": "game-3", 
-        "status": "COMPLETED", 
+        "game_id": "game-3",
+        "status": "COMPLETED",
         "platform": "PC",
-        "completed_at": "2024-01-15T10:00:00"
+        "completed_at": "2024-01-15T10:00:00",
     }
     create_response = client.post(
         "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}

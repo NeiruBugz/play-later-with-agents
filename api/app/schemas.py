@@ -182,26 +182,38 @@ class PlaythroughCreate(BaseModel):
         None, description="Personal notes about the playthrough"
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_playthrough_invariants(self):
         # Ensure started_at <= completed_at when both provided
-        if self.started_at and self.completed_at and self.started_at > self.completed_at:
+        if (
+            self.started_at
+            and self.completed_at
+            and self.started_at > self.completed_at
+        ):
             raise ValueError("started_at must be <= completed_at")
-        
+
         # Ensure completed_at is set when status indicates completion
         completion_statuses = {PlaythroughStatus.COMPLETED, PlaythroughStatus.MASTERED}
         if self.status in completion_statuses and self.completed_at is None:
-            raise ValueError(f"completed_at must be set when status is {self.status.value}")
-        
+            raise ValueError(
+                f"completed_at must be set when status is {self.status.value}"
+            )
+
         # Ensure completed_at is None if status is not a completed state
-        non_completion_statuses = {PlaythroughStatus.PLANNING, PlaythroughStatus.PLAYING, PlaythroughStatus.ON_HOLD}
+        non_completion_statuses = {
+            PlaythroughStatus.PLANNING,
+            PlaythroughStatus.PLAYING,
+            PlaythroughStatus.ON_HOLD,
+        }
         if self.status in non_completion_statuses and self.completed_at is not None:
-            raise ValueError(f"completed_at must be None when status is {self.status.value}")
-        
+            raise ValueError(
+                f"completed_at must be None when status is {self.status.value}"
+            )
+
         # Validate play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
         if self.play_time_hours is not None and self.play_time_hours < 0:
             raise ValueError("play_time_hours must be non-negative")
-        
+
         return self
 
 
@@ -228,21 +240,25 @@ class PlaythroughUpdate(BaseModel):
         None, description="Personal notes about the playthrough"
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_playthrough_invariants(self):
         # Ensure started_at <= completed_at when both provided
-        if self.started_at and self.completed_at and self.started_at > self.completed_at:
+        if (
+            self.started_at
+            and self.completed_at
+            and self.started_at > self.completed_at
+        ):
             raise ValueError("started_at must be <= completed_at")
-        
+
         # For updates, we don't enforce completion status constraints because:
         # 1. The service layer automatically sets completed_at when transitioning to completion statuses
         # 2. Partial updates shouldn't require all related fields to be provided
         # 3. The business logic validation happens in the service layer, not at the schema level
-        
+
         # Validate play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
         if self.play_time_hours is not None and self.play_time_hours < 0:
             raise ValueError("play_time_hours must be non-negative")
-        
+
         return self
 
 
@@ -262,12 +278,12 @@ class PlaythroughComplete(BaseModel):
         None, description="Final notes about the playthrough"
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_completion_invariants(self):
         # Validate final_play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
         if self.final_play_time_hours is not None and self.final_play_time_hours < 0:
             raise ValueError("final_play_time_hours must be non-negative")
-        
+
         return self
 
 
@@ -293,7 +309,7 @@ class PlaythroughBulkRequest(BaseModel):
 
 class BulkResultItem(BaseModel):
     id: str = Field(..., description="Playthrough ID")
-    status: Optional[str] = Field(None, description="Updated status")
+    status: Optional[PlaythroughStatus] = Field(None, description="Updated status")
     platform: Optional[str] = Field(None, description="Updated platform")
     play_time_hours: Optional[float] = Field(None, description="Updated play time")
 

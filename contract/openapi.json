@@ -2128,13 +2128,12 @@
           "status": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/PlaythroughStatus"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Status",
             "description": "Updated status"
           },
           "platform": {

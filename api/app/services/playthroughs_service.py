@@ -907,7 +907,7 @@ class PlaythroughsService:
                     successful_items.append(
                         BulkResultItem(
                             id=existing_playthrough.id,
-                            status=existing_playthrough.status,
+                            status=PlaythroughStatus(existing_playthrough.status),
                         )
                     )
 

@@ -96,37 +96,37 @@
 - Validate: deterministic aggregates in tests.
 - Commit: `feat(api): collection statistics endpoint`
 
-### Task 15 – GET /playthroughs
+### [x] Task 15 – GET /playthroughs
 - List with advanced filters (status, platform, rating, time, dates, search) and sorting.
 - Validate: key filter combinations and pagination.
 - Commit: `feat(api): list playthroughs with filters`
 
-### Task 16 – POST /playthroughs
+### [x] Task 16 – POST /playthroughs
 - Create with validation (exists, ownership, enums).
 - Validate: 201; 404 on invalid refs; 422 invalid payload.
 - Commit: `feat(api): create playthrough`
 
-### Task 17 – GET /playthroughs/{id}
+### [x] Task 17 – GET /playthroughs/{id}
 - Full detail with embedded game/collection and milestones.
 - Validate: 200/404.
 - Commit: `feat(api): get playthrough by id`
 
-### Task 18 – PUT /playthroughs/{id}
+### [x] Task 18 – PUT /playthroughs/{id}
 - Update with business rules and valid status transitions.
 - Validate: 422 on invalid transitions; 200 on valid; timestamps logic.
 - Commit: `feat(api): update playthrough with rules`
 
-### Task 19 – POST /playthroughs/{id}/complete
+### [x] Task 19 – POST /playthroughs/{id}/complete
 - Finalize with completion details and types.
 - Validate: 200; 409 if already completed; data persisted.
 - Commit: `feat(api): complete playthrough`
 
-### Task 20 – DELETE /playthroughs/{id}
+### [x] Task 20 – DELETE /playthroughs/{id}
 - Delete record.
 - Validate: 200/404.
 - Commit: `feat(api): delete playthrough`
 
-### Task 21 – POST /playthroughs/bulk
+### [x] Task 21 – POST /playthroughs/bulk
 - Implement bulk actions (status, platform, add_time, delete).
 - Validate: 200/207 and per-item outcomes.
 - Commit: `feat(api): bulk playthrough operations`

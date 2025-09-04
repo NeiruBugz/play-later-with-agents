@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Modules
-- `web/`: React + Vite + TypeScript app. Routes in `src/routes`, components in `src/components`, utilities in `src/lib`. API client is generated into `src/shared/api/generated/`. Styling: Tailwind CSS v4 + Shadcn UI.
+- `web/`: TanStack React + Vite + TypeScript app using TanStack Router (file-based routes in `src/routes`). Components in `src/components`, utilities in `src/lib`. API client is generated into `src/shared/api/generated/`. Styling: Tailwind CSS v4 + Shadcn UI.
 - `api/`: FastAPI service (`main.py`) managed by Poetry; Python formatting via Ruff.
 - `contract/`: OpenAPI contract (`openapi.json`) — single source of truth for the web client.
 - `infra/`: Terraform configuration (`*.tf`).
@@ -13,7 +13,7 @@
   - Build: `pnpm -F web build`
   - Test: `pnpm -F web test`
   - Lint: `pnpm -F web lint`
-  - Generate API client from contract: `pnpm -F web run gen:api`
+  - Generate API client from contract: `pnpm -F web gen:api`
 - API
   - Run locally: `cd api && poetry run uvicorn app.main:app --reload --port 8000`
   - Format Python: `cd api && poetry run ruff format`

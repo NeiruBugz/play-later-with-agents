@@ -89,12 +89,17 @@ class CollectionService:
         results = self.db.execute(query).all()
 
         items: list[CollectionItemExpanded] = []
-        for collection_item, game in results:
-            playthroughs = self.db.scalars(
-                select(Playthrough).where(
-                    Playthrough.collection_id == collection_item.id
-                )
+        collection_ids = [ci.id for ci, _ in results]
+        pts_by_cid: dict[str, list[Playthrough]] = {}
+        if collection_ids:
+            all_pts = self.db.scalars(
+                select(Playthrough).where(Playthrough.collection_id.in_(collection_ids))
             ).all()
+            for pt in all_pts:
+                pts_by_cid.setdefault(pt.collection_id, []).append(pt)
+
+        for collection_item, game in results:
+            playthroughs = pts_by_cid.get(collection_item.id, [])
 
             game_detail = GameDetail(
                 id=game.id,

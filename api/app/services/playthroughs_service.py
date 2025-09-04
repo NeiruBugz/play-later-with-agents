@@ -303,29 +303,26 @@ class PlaythroughsService:
         self, *, current_user: CurrentUser, priority: Optional[int]
     ) -> BacklogResponse:
         query = (
-            self.db.query(Playthrough)
-            .filter(
-                Playthrough.user_id == current_user.id,
-                Playthrough.status == PlaythroughStatus.PLANNING,
-            )
+            select(Playthrough, Game, CollectionItem)
             .join(Game, Playthrough.game_id == Game.id)
             .outerjoin(CollectionItem, Playthrough.collection_id == CollectionItem.id)
+            .where(
+                Playthrough.user_id == current_user.id,
+                Playthrough.status == PlaythroughStatus.PLANNING.value,
+            )
         )
         if priority is not None:
             query = query.filter(CollectionItem.priority == priority)
         query = query.order_by(Playthrough.created_at.desc())
 
         try:
-            results = query.all()
+            results = self.db.execute(query).all()
         except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting backlog for user {current_user.id}: {e}")
             raise OperationError("Failed to retrieve backlog")
 
         backlog_items: list[BacklogItem] = []
-        for playthrough in results:
-            game = self.db.query(Game).filter(Game.id == playthrough.game_id).first()
-            if not game:
-                continue
+        for playthrough, game, collection_item in results:
             game_summary = GameSummary(
                 id=game.id,
                 title=game.title,
@@ -336,21 +333,15 @@ class PlaythroughsService:
                 completionist=None,
             )
             collection_snippet = None
-            if playthrough.collection_id:
-                collection = (
-                    self.db.query(CollectionItem)
-                    .filter(CollectionItem.id == playthrough.collection_id)
-                    .first()
+            if collection_item:
+                collection_snippet = CollectionSnippet(
+                    id=collection_item.id,
+                    platform=collection_item.platform,
+                    acquisition_type=AcquisitionType(collection_item.acquisition_type),
+                    acquired_at=collection_item.acquired_at,
+                    priority=collection_item.priority,
+                    is_active=collection_item.is_active,
                 )
-                if collection:
-                    collection_snippet = CollectionSnippet(
-                        id=collection.id,
-                        platform=collection.platform,
-                        acquisition_type=collection.acquisition_type,
-                        acquired_at=collection.acquired_at,
-                        priority=collection.priority,
-                        is_active=collection.is_active,
-                    )
             backlog_items.append(
                 BacklogItem(
                     id=playthrough.id,
@@ -366,28 +357,25 @@ class PlaythroughsService:
         self, *, current_user: CurrentUser, platform: Optional[str]
     ) -> PlayingResponse:
         query = (
-            self.db.query(Playthrough)
-            .filter(
-                Playthrough.user_id == current_user.id,
-                Playthrough.status == PlaythroughStatus.PLAYING,
-            )
+            select(Playthrough, Game)
             .join(Game, Playthrough.game_id == Game.id)
+            .where(
+                Playthrough.user_id == current_user.id,
+                Playthrough.status == PlaythroughStatus.PLAYING.value,
+            )
         )
         if platform is not None:
             query = query.filter(Playthrough.platform == platform)
         query = query.order_by(Playthrough.started_at.desc())
 
         try:
-            results = query.all()
+            results = self.db.execute(query).all()
         except Exception as e:  # noqa: BLE001
             logger.error(f"Error getting playing games for user {current_user.id}: {e}")
             raise OperationError("Failed to retrieve playing games")
 
         playing_items: list[PlayingItem] = []
-        for playthrough in results:
-            game = self.db.query(Game).filter(Game.id == playthrough.game_id).first()
-            if not game:
-                continue
+        for playthrough, game in results:
             game_summary = GameSummary(
                 id=game.id,
                 title=game.title,
@@ -421,12 +409,12 @@ class PlaythroughsService:
         min_rating: Optional[int],
     ) -> CompletedResponse:
         query = (
-            self.db.query(Playthrough)
-            .filter(
-                Playthrough.user_id == current_user.id,
-                Playthrough.status == PlaythroughStatus.COMPLETED,
-            )
+            select(Playthrough, Game)
             .join(Game, Playthrough.game_id == Game.id)
+            .where(
+                Playthrough.user_id == current_user.id,
+                Playthrough.status == PlaythroughStatus.COMPLETED.value,
+            )
         )
         if year is not None:
             query = query.filter(func.extract("year", Playthrough.completed_at) == year)
@@ -437,7 +425,7 @@ class PlaythroughsService:
         query = query.order_by(Playthrough.completed_at.desc())
 
         try:
-            results = query.all()
+            results = self.db.execute(query).all()
         except Exception as e:  # noqa: BLE001
             logger.error(
                 f"Error getting completed games for user {current_user.id}: {e}"
@@ -445,10 +433,7 @@ class PlaythroughsService:
             raise OperationError("Failed to retrieve completed games")
 
         completed_items: list[CompletedItem] = []
-        for playthrough in results:
-            game = self.db.query(Game).filter(Game.id == playthrough.game_id).first()
-            if not game:
-                continue
+        for playthrough, game in results:
             game_summary = GameSummary(
                 id=game.id,
                 title=game.title,

@@ -517,7 +517,8 @@ class PlaythroughsService:
         completed_playthroughs = [
             p
             for p in playthroughs
-            if p.status in [PlaythroughStatus.COMPLETED, PlaythroughStatus.MASTERED]
+            if p.status
+            in [PlaythroughStatus.COMPLETED.value, PlaythroughStatus.MASTERED.value]
         ]
 
         completion_stats: dict[str, float] = {}

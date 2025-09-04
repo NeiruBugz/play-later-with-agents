@@ -506,6 +506,60 @@ def test_list_playthroughs_sorting(test_data):
     assert data["items"][1]["play_time_hours"] == 15.0  # pt5
 
 
+def test_list_playthroughs_sorting_by_title(test_data):
+    """Test sorting playthroughs by game title."""
+    response = client.get(
+        "/api/v1/playthroughs?sort_by=title&sort_order=asc",
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    # Should be sorted by game title ascending:
+    # "Cyberpunk 2077" (pt-4), "Elden Ring" (pt-2), "Hollow Knight" (pt-3), "The Witcher 3" (pt-1, pt-5)
+    game_titles = [item["game"]["title"] for item in data["items"]]
+    expected_titles = [
+        "Cyberpunk 2077",
+        "Elden Ring",
+        "Hollow Knight",
+        "The Witcher 3",
+        "The Witcher 3",
+    ]
+    assert game_titles == expected_titles
+
+
+def test_list_playthroughs_sorting_by_status(test_data):
+    """Test sorting playthroughs by status."""
+    response = client.get(
+        "/api/v1/playthroughs?sort_by=status&sort_order=asc",
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    # Should be sorted by status ascending:
+    # "COMPLETED" (pt-1), "DROPPED" (pt-4), "ON_HOLD" (pt-5), "PLANNING" (pt-3), "PLAYING" (pt-2)
+    statuses = [item["status"] for item in data["items"]]
+    expected_statuses = ["COMPLETED", "DROPPED", "ON_HOLD", "PLANNING", "PLAYING"]
+    assert statuses == expected_statuses
+
+
+def test_list_playthroughs_sorting_by_platform(test_data):
+    """Test sorting playthroughs by platform."""
+    response = client.get(
+        "/api/v1/playthroughs?sort_by=platform&sort_order=asc",
+        headers={"X-User-Id": "user-1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+
+    # Should be sorted by platform ascending:
+    # "PC" (pt-1, pt-4, pt-5), "PS5" (pt-2), "Steam" (pt-3)
+    platforms = [item["platform"] for item in data["items"]]
+    expected_platforms = ["PC", "PC", "PC", "PS5", "Steam"]
+    assert platforms == expected_platforms
+
+
 def test_list_playthroughs_pagination(test_data):
     """Test pagination functionality."""
     # Get first page with limit 2

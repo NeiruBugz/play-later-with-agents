@@ -124,7 +124,7 @@ async def create_playthrough(
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except ValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e))
     except OperationError as e:
         raise HTTPException(status_code=500, detail=str(e))
 

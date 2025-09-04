@@ -814,7 +814,7 @@ def test_create_playthrough_collection_game_mismatch(test_data):
     response = client.post(
         "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
     assert "Collection item is for a different game" in response.json()["message"]
 
 

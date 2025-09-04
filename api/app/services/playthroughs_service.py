@@ -7,7 +7,7 @@ from uuid import uuid4
 import logging
 from sqlalchemy import and_, or_, func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.auth import CurrentUser
 from app.db_models import CollectionItem, Game, Playthrough
@@ -312,7 +312,7 @@ class PlaythroughsService:
             )
         )
         if priority is not None:
-            query = query.filter(CollectionItem.priority == priority)
+            query = query.where(CollectionItem.priority == priority)
         query = query.order_by(Playthrough.created_at.desc())
 
         try:

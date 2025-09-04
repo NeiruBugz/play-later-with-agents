@@ -47,6 +47,7 @@
                 }
               ],
               "description": "Filter by platform",
+              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -65,6 +66,7 @@
                 }
               ],
               "description": "Filter by acquisition type",
+              "default": null,
               "title": "Acquisition Type"
             },
             "description": "Filter by acquisition type"
@@ -85,6 +87,7 @@
                 }
               ],
               "description": "Filter by priority (1-5)",
+              "default": null,
               "title": "Priority"
             },
             "description": "Filter by priority (1-5)"
@@ -103,6 +106,7 @@
                 }
               ],
               "description": "Filter by active status",
+              "default": null,
               "title": "Is Active"
             },
             "description": "Filter by active status"
@@ -121,6 +125,7 @@
                 }
               ],
               "description": "Search in game title or notes",
+              "default": null,
               "title": "Search"
             },
             "description": "Search in game title or notes"
@@ -189,6 +194,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -205,6 +211,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -253,6 +260,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -269,6 +277,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -329,6 +338,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -345,6 +355,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -404,6 +415,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -420,6 +432,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -477,6 +490,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -493,6 +507,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -572,6 +587,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -588,6 +604,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -640,6 +657,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -656,6 +674,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -700,7 +719,6 @@
           "playthroughs"
         ],
         "summary": "List Playthroughs",
-        "description": "Get user's playthroughs with advanced filtering options.",
         "operationId": "list_playthroughs_api_v1_playthroughs_get",
         "parameters": [
           {
@@ -720,6 +738,7 @@
                 }
               ],
               "description": "Filter by playthrough status",
+              "default": null,
               "title": "Status"
             },
             "description": "Filter by playthrough status"
@@ -741,6 +760,7 @@
                 }
               ],
               "description": "Filter by platforms",
+              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platforms"
@@ -761,6 +781,7 @@
                 }
               ],
               "description": "Minimum rating (1-10)",
+              "default": null,
               "title": "Rating Min"
             },
             "description": "Minimum rating (1-10)"
@@ -781,6 +802,7 @@
                 }
               ],
               "description": "Maximum rating (1-10)",
+              "default": null,
               "title": "Rating Max"
             },
             "description": "Maximum rating (1-10)"
@@ -800,6 +822,7 @@
                 }
               ],
               "description": "Minimum play time in hours",
+              "default": null,
               "title": "Play Time Min"
             },
             "description": "Minimum play time in hours"
@@ -819,6 +842,7 @@
                 }
               ],
               "description": "Maximum play time in hours",
+              "default": null,
               "title": "Play Time Max"
             },
             "description": "Maximum play time in hours"
@@ -840,6 +864,7 @@
                 }
               ],
               "description": "Filter by difficulty settings",
+              "default": null,
               "title": "Difficulty"
             },
             "description": "Filter by difficulty settings"
@@ -861,6 +886,7 @@
                 }
               ],
               "description": "Filter by playthrough type",
+              "default": null,
               "title": "Playthrough Type"
             },
             "description": "Filter by playthrough type"
@@ -880,6 +906,7 @@
                 }
               ],
               "description": "Started after date (YYYY-MM-DD)",
+              "default": null,
               "title": "Started After"
             },
             "description": "Started after date (YYYY-MM-DD)"
@@ -899,6 +926,7 @@
                 }
               ],
               "description": "Started before date (YYYY-MM-DD)",
+              "default": null,
               "title": "Started Before"
             },
             "description": "Started before date (YYYY-MM-DD)"
@@ -918,6 +946,7 @@
                 }
               ],
               "description": "Completed after date (YYYY-MM-DD)",
+              "default": null,
               "title": "Completed After"
             },
             "description": "Completed after date (YYYY-MM-DD)"
@@ -937,6 +966,7 @@
                 }
               ],
               "description": "Completed before date (YYYY-MM-DD)",
+              "default": null,
               "title": "Completed Before"
             },
             "description": "Completed before date (YYYY-MM-DD)"
@@ -955,6 +985,7 @@
                 }
               ],
               "description": "Search in game titles and notes",
+              "default": null,
               "title": "Search"
             },
             "description": "Search in game titles and notes"
@@ -1021,6 +1052,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1037,6 +1069,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1069,7 +1102,6 @@
           "playthroughs"
         ],
         "summary": "Create Playthrough",
-        "description": "Create a new playthrough for the authenticated user.",
         "operationId": "create_playthrough_api_v1_playthroughs_post",
         "parameters": [
           {
@@ -1085,6 +1117,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1101,6 +1134,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1145,7 +1179,6 @@
           "playthroughs"
         ],
         "summary": "Get Backlog",
-        "description": "Get user's backlog (planning status playthroughs).",
         "operationId": "get_backlog_api_v1_playthroughs_backlog_get",
         "parameters": [
           {
@@ -1164,6 +1197,7 @@
                 }
               ],
               "description": "Filter by collection priority",
+              "default": null,
               "title": "Priority"
             },
             "description": "Filter by collection priority"
@@ -1181,6 +1215,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1197,6 +1232,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1231,7 +1267,6 @@
           "playthroughs"
         ],
         "summary": "Get Playing",
-        "description": "Get user's currently playing games (playing status playthroughs).",
         "operationId": "get_playing_api_v1_playthroughs_playing_get",
         "parameters": [
           {
@@ -1248,6 +1283,7 @@
                 }
               ],
               "description": "Filter by platform",
+              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -1265,6 +1301,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1281,6 +1318,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1315,7 +1353,6 @@
           "playthroughs"
         ],
         "summary": "Get Completed",
-        "description": "Get user's completed games (completed status playthroughs) with filters and statistics.",
         "operationId": "get_completed_api_v1_playthroughs_completed_get",
         "parameters": [
           {
@@ -1332,6 +1369,7 @@
                 }
               ],
               "description": "Filter by completion year",
+              "default": null,
               "title": "Year"
             },
             "description": "Filter by completion year"
@@ -1350,6 +1388,7 @@
                 }
               ],
               "description": "Filter by platform",
+              "default": null,
               "title": "Platform"
             },
             "description": "Filter by platform"
@@ -1370,6 +1409,7 @@
                 }
               ],
               "description": "Filter by minimum rating",
+              "default": null,
               "title": "Min Rating"
             },
             "description": "Filter by minimum rating"
@@ -1387,6 +1427,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1403,6 +1444,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1437,7 +1479,6 @@
           "playthroughs"
         ],
         "summary": "Get Stats",
-        "description": "Get comprehensive playthrough statistics for the user.",
         "operationId": "get_stats_api_v1_playthroughs_stats_get",
         "parameters": [
           {
@@ -1453,6 +1494,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1469,6 +1511,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1503,7 +1546,6 @@
           "playthroughs"
         ],
         "summary": "Get Playthrough By Id",
-        "description": "Get a playthrough by ID with full details including embedded game, collection, and milestones.",
         "operationId": "get_playthrough_by_id_api_v1_playthroughs__playthrough_id__get",
         "parameters": [
           {
@@ -1528,6 +1570,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1544,6 +1587,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1576,7 +1620,6 @@
           "playthroughs"
         ],
         "summary": "Update Playthrough",
-        "description": "Update a playthrough with business rules and valid status transitions.",
         "operationId": "update_playthrough_api_v1_playthroughs__playthrough_id__put",
         "parameters": [
           {
@@ -1601,6 +1644,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1617,6 +1661,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1659,7 +1704,6 @@
           "playthroughs"
         ],
         "summary": "Delete Playthrough",
-        "description": "Delete a playthrough record.",
         "operationId": "delete_playthrough_api_v1_playthroughs__playthrough_id__delete",
         "parameters": [
           {
@@ -1684,6 +1728,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1700,6 +1745,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1734,7 +1780,6 @@
           "playthroughs"
         ],
         "summary": "Complete Playthrough",
-        "description": "Mark playthrough as completed with final details.",
         "operationId": "complete_playthrough_api_v1_playthroughs__playthrough_id__complete_post",
         "parameters": [
           {
@@ -1759,6 +1804,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1775,6 +1821,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }
@@ -1819,7 +1866,6 @@
           "playthroughs"
         ],
         "summary": "Bulk Playthrough Operations",
-        "description": "Perform bulk operations on multiple playthroughs.",
         "operationId": "bulk_playthrough_operations_api_v1_playthroughs_bulk_post",
         "parameters": [
           {
@@ -1835,6 +1881,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "X-User-Id"
             }
           },
@@ -1851,6 +1898,7 @@
                   "type": "null"
                 }
               ],
+              "default": null,
               "title": "Session User"
             }
           }

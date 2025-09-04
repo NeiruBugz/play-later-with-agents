@@ -13,7 +13,6 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     func,
-    Index,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -41,7 +40,7 @@ class Game(Base):
         nullable=False,
     )
 
-    __table_args__ = (Index("ix_games_title", "title"),)
+    # Rely on column-level index=True for title; avoid duplicate explicit Index
 
 
 class CollectionItem(Base):

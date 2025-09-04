@@ -1,14 +1,21 @@
 import logging.config
 from pathlib import Path
+from datetime import datetime, date
+from typing import Any
+import json
 
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from pydantic.json import pydantic_encoder
 
 from app.config import settings
 from app.models import WelcomeResponse
 from app.exception_handlers import register_exception_handlers, request_id_middleware
 from app.routers import health, collection, playthroughs
+from app.utils import format_datetime
 
 # Load logging configuration
 log_config_path = Path(__file__).parent.parent / "logging.yaml"
@@ -17,7 +24,49 @@ with open(log_config_path) as f:
     logging.config.dictConfig(config)
 
 
+# Configure global JSON encoder for datetime objects
+def setup_json_encoder():
+    """Configure FastAPI to use consistent datetime serialization"""
+    from fastapi.encoders import jsonable_encoder
+    from fastapi.responses import JSONResponse
+
+    # Store original encoder
+    original_jsonable_encoder = jsonable_encoder
+
+    def custom_jsonable_encoder(obj, **kwargs):
+        # Handle datetime objects consistently
+        if isinstance(obj, (datetime, date)):
+            return format_datetime(obj)
+        elif hasattr(obj, "__dict__"):
+            # For objects with attributes, recursively encode
+            result = {}
+            for key, value in obj.__dict__.items():
+                if isinstance(value, (datetime, date)):
+                    result[key] = format_datetime(value)
+                else:
+                    result[key] = (
+                        custom_jsonable_encoder(value, **kwargs)
+                        if hasattr(value, "__dict__")
+                        else value
+                    )
+            return result
+        elif isinstance(obj, dict):
+            return {k: custom_jsonable_encoder(v, **kwargs) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [custom_jsonable_encoder(item, **kwargs) for item in obj]
+        else:
+            return original_jsonable_encoder(obj, **kwargs)
+
+    # Monkey patch the encoder
+    import fastapi.encoders
+
+    fastapi.encoders.jsonable_encoder = custom_jsonable_encoder
+
+
 def create_app() -> FastAPI:
+    # Setup custom JSON encoding for datetime objects
+    setup_json_encoder()
+
     app = FastAPI(
         title=settings.app_name,
         description="A gaming backlog management application",

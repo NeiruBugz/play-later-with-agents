@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from app.utils import format_datetime
 import logging
 import typing as t
 import uuid
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat()
+    return format_datetime(dt.datetime.now(dt.timezone.utc))
 
 
 def _get_request_id(request: Request) -> str:

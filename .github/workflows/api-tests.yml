@@ -1,0 +1,55 @@
+name: API Tests
+
+on:
+  push:
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+  pull_request:
+    paths:
+      - 'api/**'
+
+jobs:
+  tests:
+    name: Run API tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: api
+
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Configure Poetry to use in-project venv
+        run: poetry config virtualenvs.in-project true
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: api/.venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('api/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Run tests
+        env:
+          PYTHONPATH: .
+        run: poetry run pytest -q
+

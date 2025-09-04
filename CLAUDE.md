@@ -22,7 +22,7 @@ pnpm install                    # Install all workspace dependencies
 # From root or cd web/
 pnpm --filter web dev           # Start dev server on port 3000
 pnpm --filter web start         # Alias for dev
-pnpm --filter web build         # Production build with TypeScript check
+pnpm --filter web build         # Production build with Vite and TypeScript check
 pnpm --filter web test          # Run Vitest tests
 pnpm --filter web lint          # ESLint check
 pnpm --filter web gen:api       # Generate API client from OpenAPI schema
@@ -32,7 +32,8 @@ pnpm --filter web gen:api       # Generate API client from OpenAPI schema
 ```bash
 cd api/
 poetry install                  # Install Python dependencies
-poetry run uvicorn main:app --reload  # Start development server
+source .venv/bin/activate        # Activate virtual environment
+poetry run uvicorn app.main:app --reload  # Start development server
 poetry run ruff format          # Format Python code
 poetry run pytest               # Run tests
 
@@ -41,6 +42,9 @@ source .venv/bin/activate && PYTHONPATH=. python -m alembic upgrade head  # Run 
 source .venv/bin/activate && PYTHONPATH=. python -m alembic current       # Check current version
 source .venv/bin/activate && PYTHONPATH=. python -m alembic history       # View migration history
 source .venv/bin/activate && PYTHONPATH=. python -m alembic revision --autogenerate -m "description"  # Generate new migration
+
+# OpenAPI schema generation
+poetry run generate-schema       # Generate OpenAPI schema to contract/openapi.json
 ```
 
 ### Infrastructure
@@ -58,13 +62,15 @@ This project uses Lefthook for git hooks with the following checks:
 
 Conventional commits are enforced using commitlint. Follow the format: `type(scope): description`
 
+Initialize git hooks after cloning: `pnpm install` (runs `lefthook install` automatically)
+
 ## Key Technologies & Conventions
 
 ### Frontend (web/)
 - **Framework**: TanStack React with file-based routing in `src/routes/`
 - **Styling**: Tailwind CSS v4 with Shadcn UI components
 - **Testing**: Vitest with React Testing Library
-- **API Client**: Generated from OpenAPI using @hey-api/openapi-ts
+- **API Client**: Generated from OpenAPI using @hey-api/openapi-ts with Axios client
 - **Dev Tools**: TanStack Router Devtools enabled
 
 ### Backend (api/)
@@ -90,11 +96,14 @@ cd api/
 # Create .env file with DATABASE_URL
 echo "DATABASE_URL=postgresql://postgres:postgres@0.0.0.0:6432/play-later-db" > .env
 
+# Activate virtual environment
+source .venv/bin/activate
+
 # Run migrations to create/update tables
-source .venv/bin/activate && PYTHONPATH=. python -m alembic upgrade head
+PYTHONPATH=. python -m alembic upgrade head
 
 # Run tests (uses same database)
-source .venv/bin/activate && pytest
+pytest
 ```
 
 ## API Client Generation
@@ -103,4 +112,95 @@ The frontend generates TypeScript API clients from the OpenAPI schema:
 ```bash
 pnpm --filter web gen:api
 ```
-This reads from `contract/openapi.json` and outputs to `web/src/api/`
+This reads from `contract/openapi.json` and outputs to `web/src/shared/api/generated/`
+
+## Testing Approach
+
+Follow Test-Driven Development (TDD) practices:
+- **Write tests first** before implementing functionality
+- **Confirm tests fail** initially to validate test correctness
+- **Implement code** to make tests pass
+- **Verify implementation** isn't overfitting to specific test cases
+
+### Frontend Testing (Vitest + React Testing Library)
+```bash
+pnpm --filter web test          # Run all tests
+pnpm --filter web test --watch  # Run tests in watch mode
+```
+- Test components in isolation
+- Mock API calls using MSW or similar
+- Focus on user behavior over implementation details
+
+### Backend Testing (pytest)
+```bash
+cd api/
+source .venv/bin/activate
+pytest                          # Run all tests
+pytest -v                       # Verbose output
+pytest --cov                    # Run with coverage
+```
+- Test API endpoints using FastAPI's TestClient
+- Use database fixtures for consistent test state
+- Test both success and error cases
+
+## Code Style Guidelines
+
+### General Principles
+- Follow existing patterns in each package
+- Prioritize readability and maintainability
+- Use TypeScript strict mode for frontend
+- Follow FastAPI and SQLAlchemy conventions for backend
+
+### Frontend (TypeScript/React)
+- Use functional components with hooks
+- Implement proper TypeScript typing (avoid `any`)
+- Follow TanStack Router file-based routing conventions
+- Use Shadcn UI components when available
+- Prefer composition over inheritance
+- Use meaningful variable and function names
+- Use kebab case for file names
+- Use named exports instead of default ones
+
+### Backend (Python/FastAPI)
+- Follow PEP 8 style guide (enforced by Ruff)
+- Use type hints for all function parameters and returns
+- Implement proper error handling with HTTP status codes
+- Use SQLAlchemy models for database operations
+- Follow FastAPI dependency injection patterns
+- Use Pydantic models for request/response validation
+
+### Workflow (Python/FastAPI)
+- Follow TDD when creating code changes
+- Run tests for changed files before commiting
+- Run formatter before commiting
+- After commiting changes, update OpenAPI schema and commit /contract changes
+
+### Workflow (TypeScript/React)
+- Follow TDD when: create tests before implementation
+- Run linter, formatter and typecheck before commiting
+- Run tests for changed files before commiting
+
+### Database
+- Use descriptive table and column names
+- Include proper constraints and indexes
+- Write reversible Alembic migrations
+- Document complex queries and relationships
+
+## Known Issues
+
+### Development Environment
+- Database migrations require PostgreSQL to be running on port 6432
+- API client generation depends on valid OpenAPI schema in `contract/openapi.json`
+- Lefthook pre-commit hooks may fail if dependencies aren't installed
+
+### Common Gotchas
+- Frontend API client must be regenerated after backend schema changes
+- Database URL in `api/.env` must match your local PostgreSQL configuration
+- Some tests may require database to be in a clean state (run migrations first)
+- Virtual environment must be activated for Python commands to work properly
+
+### Troubleshooting
+- If frontend build fails, check TypeScript errors first
+- If API tests fail, verify database connection and run migrations
+- If pre-commit hooks fail, run format/lint commands manually first
+- If Python commands fail, ensure virtual environment is activated with `source .venv/bin/activate`

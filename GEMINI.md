@@ -20,6 +20,12 @@ The project is structured as a monorepo, managed with `pnpm` workspaces, and com
     *   Advanced filtering, sorting, and pagination.
     *   Bulk operations for updating multiple items at once.
     *   Soft and hard delete options.
+*   **Playthrough Management:**
+    *   CRUD operations for game playthroughs.
+    *   Track status (backlog, playing, completed), ratings, play time, and more.
+    *   Advanced filtering and sorting capabilities.
+    *   Specialized endpoints for backlog, playing, and completed views.
+    *   Bulk update and delete operations.
 *   **Health Check:**
     *   `GET /health` endpoint for monitoring application status.
 

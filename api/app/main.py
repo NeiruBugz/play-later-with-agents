@@ -34,26 +34,9 @@ def setup_json_encoder():
     original_jsonable_encoder = jsonable_encoder
 
     def custom_jsonable_encoder(obj, **kwargs):
-        # Handle datetime objects consistently
+        # Only handle datetime and date objects, defer everything else to original encoder
         if isinstance(obj, (datetime, date)):
             return format_datetime(obj)
-        elif hasattr(obj, "__dict__"):
-            # For objects with attributes, recursively encode
-            result = {}
-            for key, value in obj.__dict__.items():
-                if isinstance(value, (datetime, date)):
-                    result[key] = format_datetime(value)
-                else:
-                    result[key] = (
-                        custom_jsonable_encoder(value, **kwargs)
-                        if hasattr(value, "__dict__")
-                        else value
-                    )
-            return result
-        elif isinstance(obj, dict):
-            return {k: custom_jsonable_encoder(v, **kwargs) for k, v in obj.items()}
-        elif isinstance(obj, (list, tuple)):
-            return [custom_jsonable_encoder(item, **kwargs) for item in obj]
         else:
             return original_jsonable_encoder(obj, **kwargs)
 

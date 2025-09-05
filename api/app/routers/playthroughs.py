@@ -3,8 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.auth import CurrentUser, get_current_user
 from app.schemas import (
@@ -249,6 +248,7 @@ async def delete_playthrough(
 @router.post("/bulk", response_model=PlaythroughBulkResponse)
 async def bulk_playthrough_operations(
     bulk_request: PlaythroughBulkRequest,
+    response: Response,
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughBulkResponse:
@@ -261,6 +261,7 @@ async def bulk_playthrough_operations(
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e))
     if data.get("success"):
-        return JSONResponse(content=data, status_code=200)
+        response.status_code = 200
     else:
-        return JSONResponse(content=data, status_code=207)
+        response.status_code = 207
+    return data

@@ -35,6 +35,7 @@ poetry install                  # Install Python dependencies
 source .venv/bin/activate        # Activate virtual environment
 poetry run uvicorn app.main:app --reload  # Start development server
 poetry run ruff format          # Format Python code
+poetry run pylint app/           # Run Pylint for code quality analysis
 poetry run pytest               # Run tests
 
 # Database migrations (requires PostgreSQL running)
@@ -57,6 +58,7 @@ terraform fmt -recursive infra  # Format Terraform files
 This project uses Lefthook for git hooks with the following checks:
 - Frontend linting before commits
 - Python formatting with Ruff before commits
+- Python linting with Pylint before commits
 - Terraform formatting before commits
 - Conventional commit message linting
 

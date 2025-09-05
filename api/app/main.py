@@ -1,15 +1,10 @@
 import logging.config
 from pathlib import Path
 from datetime import datetime, date
-from typing import Any
-import json
 
 import yaml
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from pydantic.json import pydantic_encoder
 
 from app.config import settings
 from app.models import WelcomeResponse
@@ -28,7 +23,6 @@ with open(log_config_path) as f:
 def setup_json_encoder():
     """Configure FastAPI to use consistent datetime serialization"""
     from fastapi.encoders import jsonable_encoder
-    from fastapi.responses import JSONResponse
 
     # Store original encoder
     original_jsonable_encoder = jsonable_encoder

@@ -79,8 +79,10 @@ Initialize git hooks after cloning: `pnpm install` (runs `lefthook install` auto
 - **Framework**: FastAPI with Python 3.9+
 - **Package Manager**: Poetry
 - **Code Formatting**: Ruff
+- **Code Quality**: Pylint for static analysis and code quality checks
 - **Database**: PostgreSQL with SQLAlchemy ORM and Alembic migrations
 - **Testing**: pytest with TestClient for API endpoints
+- **CI/CD**: GitHub Actions with separate linting and testing jobs
 
 ### Shadcn UI Components
 Add new components using: `pnpx shadcn@latest add [component-name]`

@@ -31,8 +31,8 @@ pnpm --filter web gen:api       # Generate API client from OpenAPI schema
 ### Python API (FastAPI)
 ```bash
 cd api/
-poetry install                  # Install Python dependencies
 source .venv/bin/activate        # Activate virtual environment
+poetry install                  # Install Python dependencies
 poetry run uvicorn app.main:app --reload  # Start development server
 poetry run ruff format          # Format Python code
 poetry run pylint app/           # Run Pylint for code quality analysis

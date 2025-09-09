@@ -535,7 +535,7 @@
           "collection"
         ],
         "summary": "Delete Collection Item",
-        "description": "Delete a collection item (soft delete by default, hard delete with safeguards).",
+        "description": "Delete a collection item (soft delete by default, hard delete with\nsafeguards).",
         "operationId": "delete_collection_item_api_v1_collection__collection_id__delete",
         "parameters": [
           {
@@ -703,7 +703,7 @@
         "operationId": "list_playthroughs_api_v1_playthroughs_get",
         "parameters": [
           {
-            "name": "status",
+            "name": "playthrough_status",
             "in": "query",
             "required": false,
             "schema": {
@@ -719,7 +719,7 @@
                 }
               ],
               "description": "Filter by playthrough status",
-              "title": "Status"
+              "title": "Playthrough Status"
             },
             "description": "Filter by playthrough status"
           },
@@ -2254,8 +2254,7 @@
           "acquired_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -2301,13 +2300,25 @@
             "title": "Playthroughs"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           }
         },
@@ -2458,8 +2469,7 @@
           "acquired_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -2941,7 +2951,6 @@
           },
           "achieved_at": {
             "type": "string",
-            "format": "date-time",
             "title": "Achieved At"
           }
         },
@@ -3041,6 +3050,7 @@
               "type": "string"
             },
             "type": "array",
+            "maxItems": 100,
             "minItems": 1,
             "title": "Playthrough Ids",
             "description": "List of playthrough IDs"
@@ -3353,8 +3363,7 @@
           "started_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3365,8 +3374,7 @@
           "completed_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3433,13 +3441,25 @@
             "title": "Notes"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           },
           "game": {
@@ -3502,8 +3522,7 @@
           "started_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3514,8 +3533,7 @@
           "completed_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3582,13 +3600,25 @@
             "title": "Notes"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           },
           "game": {
@@ -3695,8 +3725,7 @@
           "started_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3707,8 +3736,7 @@
           "completed_at": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3775,13 +3803,25 @@
             "title": "Notes"
           },
           "created_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
           },
           "updated_at": {
-            "type": "string",
-            "format": "date-time",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Updated At"
           }
         },

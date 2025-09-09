@@ -224,7 +224,8 @@ class PlaythroughCreate(BaseModel):
                 f"completed_at must be None when status is {self.status.value}"
             )
 
-        # Validate play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
+        # Validate play_time_hours is non-negative
+        # (already handled by Field constraint, but included for clarity)
         if self.play_time_hours is not None and self.play_time_hours < 0:
             raise ValueError("play_time_hours must be non-negative")
 
@@ -265,11 +266,15 @@ class PlaythroughUpdate(BaseModel):
             raise ValueError("started_at must be <= completed_at")
 
         # For updates, we don't enforce completion status constraints because:
-        # 1. The service layer automatically sets completed_at when transitioning to completion statuses
-        # 2. Partial updates shouldn't require all related fields to be provided
-        # 3. The business logic validation happens in the service layer, not at the schema level
+        # 1. The service layer automatically sets completed_at when
+        #    transitioning to completion statuses
+        # 2. Partial updates shouldn't require all related fields to be
+        #    provided
+        # 3. The business logic validation happens in the service layer,
+        #    not at the schema level
 
-        # Validate play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
+        # Validate play_time_hours is non-negative
+        # (already handled by Field constraint, but included for clarity)
         if self.play_time_hours is not None and self.play_time_hours < 0:
             raise ValueError("play_time_hours must be non-negative")
 
@@ -294,7 +299,8 @@ class PlaythroughComplete(BaseModel):
 
     @model_validator(mode="after")
     def validate_completion_invariants(self):
-        # Validate final_play_time_hours is non-negative (already handled by Field constraint, but included for clarity)
+        # Validate final_play_time_hours is non-negative
+        # (already handled by Field constraint, but included for clarity)
         if self.final_play_time_hours is not None and self.final_play_time_hours < 0:
             raise ValueError("final_play_time_hours must be non-negative")
 
@@ -316,7 +322,7 @@ class BulkAction(str, Enum):
 class PlaythroughBulkRequest(BaseModel):
     action: BulkAction = Field(..., description="Bulk action to perform")
     playthrough_ids: list[str] = Field(
-        ..., min_length=1, description="List of playthrough IDs"
+        ..., min_length=1, max_length=100, description="List of playthrough IDs"
     )
     data: Optional[dict] = Field(None, description="Action-specific data")
 

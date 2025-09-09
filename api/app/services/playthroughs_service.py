@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -7,7 +8,7 @@ from uuid import uuid4
 import logging
 from sqlalchemy import and_, or_, func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.auth import CurrentUser
 from app.db_models import CollectionItem, Game, Playthrough
@@ -54,7 +55,7 @@ class PlaythroughsService:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_playthroughs(
+    def list_playthroughs(  # pylint: disable=too-many-branches,too-many-statements
         self,
         *,
         current_user: CurrentUser,
@@ -293,10 +294,10 @@ class PlaythroughsService:
             self.db.add(playthrough)
             self.db.commit()
             self.db.refresh(playthrough)
-        except IntegrityError as e:  # noqa: BLE001
+        except IntegrityError as e:  # pylint: disable=broad-exception-caught
             self.db.rollback()
-            logger.error(f"Database error creating playthrough: {e}")
-            raise OperationError("Failed to create playthrough")
+            logger.error("Database error creating playthrough: %s", e)
+            raise OperationError("Failed to create playthrough") from e
 
         return PlaythroughResponse(
             id=playthrough.id,
@@ -334,9 +335,9 @@ class PlaythroughsService:
 
         try:
             results = self.db.execute(query).all()
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error getting backlog for user {current_user.id}: {e}")
-            raise OperationError("Failed to retrieve backlog")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error("Error getting backlog for user %s: %s", current_user.id, e)
+            raise OperationError("Failed to retrieve backlog") from e
 
         backlog_items: list[BacklogItem] = []
         for playthrough, game, collection_item in results:
@@ -387,9 +388,11 @@ class PlaythroughsService:
 
         try:
             results = self.db.execute(query).all()
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error getting playing games for user {current_user.id}: {e}")
-            raise OperationError("Failed to retrieve playing games")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Error getting playing games for user %s: %s", current_user.id, e
+            )
+            raise OperationError("Failed to retrieve playing games") from e
 
         playing_items: list[PlayingItem] = []
         for playthrough, game in results:
@@ -443,11 +446,11 @@ class PlaythroughsService:
 
         try:
             results = self.db.execute(query).all()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(
-                f"Error getting completed games for user {current_user.id}: {e}"
+                "Error getting completed games for user %s: %s", current_user.id, e
             )
-            raise OperationError("Failed to retrieve completed games")
+            raise OperationError("Failed to retrieve completed games") from e
 
         completed_items: list[CompletedItem] = []
         for playthrough, game in results:
@@ -510,11 +513,11 @@ class PlaythroughsService:
                 .filter(Playthrough.user_id == current_user.id)
                 .all()
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error(
-                f"Error getting playthrough stats for user {current_user.id}: {e}"
+                "Error getting playthrough stats for user %s: %s", current_user.id, e
             )
-            raise OperationError("Failed to retrieve playthrough statistics")
+            raise OperationError("Failed to retrieve playthrough statistics") from e
 
         total_playthroughs = len(playthroughs)
         by_status: dict[str, int] = {}
@@ -689,7 +692,8 @@ class PlaythroughsService:
                 existing_playthrough.status, update_data.status.value
             ):
                 raise ValidationError(
-                    f"Invalid status transition from {existing_playthrough.status} to {update_data.status.value}"
+                    f"Invalid status transition from {existing_playthrough.status} "
+                    f"to {update_data.status.value}"
                 )
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude_none=False)
@@ -719,10 +723,10 @@ class PlaythroughsService:
         try:
             self.db.commit()
             self.db.refresh(existing_playthrough)
-        except IntegrityError as e:  # noqa: BLE001
+        except IntegrityError as e:  # pylint: disable=broad-exception-caught
             self.db.rollback()
-            logger.error(f"Database error updating playthrough: {e}")
-            raise OperationError("Failed to update playthrough")
+            logger.error("Database error updating playthrough: %s", e)
+            raise OperationError("Failed to update playthrough") from e
 
         return PlaythroughResponse(
             id=existing_playthrough.id,
@@ -793,10 +797,10 @@ class PlaythroughsService:
         try:
             self.db.commit()
             self.db.refresh(existing_playthrough)
-        except IntegrityError as e:  # noqa: BLE001
+        except IntegrityError as e:  # pylint: disable=broad-exception-caught
             self.db.rollback()
-            logger.error(f"Database error completing playthrough: {e}")
-            raise OperationError("Failed to complete playthrough")
+            logger.error("Database error completing playthrough: %s", e)
+            raise OperationError("Failed to complete playthrough") from e
 
         return PlaythroughResponse(
             id=existing_playthrough.id,
@@ -816,7 +820,9 @@ class PlaythroughsService:
             updated_at=existing_playthrough.updated_at,
         )
 
-    def delete_playthrough(self, *, current_user: CurrentUser, playthrough_id: str):
+    def delete_playthrough(  # pylint: disable=too-many-branches,too-many-statements
+        self, *, current_user: CurrentUser, playthrough_id: str
+    ):
         existing_playthrough = (
             self.db.query(Playthrough)
             .filter(
@@ -832,17 +838,17 @@ class PlaythroughsService:
         try:
             self.db.delete(existing_playthrough)
             self.db.commit()
-            from app.schemas import PlaythroughDeleteResponse
+            from app.schemas import PlaythroughDeleteResponse  # pylint: disable=import-outside-toplevel
 
             return PlaythroughDeleteResponse(
                 success=True, message="Playthrough deleted successfully"
             )
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.db.rollback()
-            logger.error(f"Database error deleting playthrough: {e}")
-            raise OperationError("Failed to delete playthrough")
+            logger.error("Database error deleting playthrough: %s", e)
+            raise OperationError("Failed to delete playthrough") from e
 
-    def bulk_playthrough_operations(
+    def bulk_playthrough_operations(  # pylint: disable=too-many-branches,too-many-statements
         self, *, current_user: CurrentUser, bulk_request: PlaythroughBulkRequest
     ):
         if bulk_request.action == BulkAction.UPDATE_STATUS:
@@ -854,7 +860,8 @@ class PlaythroughsService:
             valid_statuses = {status.value for status in PlaythroughStatus}
             if status_value not in valid_statuses:
                 raise BadRequestError(
-                    f"Invalid status '{status_value}'. Valid values are: {', '.join(sorted(valid_statuses))}"
+                    f"Invalid status '{status_value}'. Valid values are: "
+                    f"{', '.join(sorted(valid_statuses))}"
                 )
 
         elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
@@ -940,7 +947,7 @@ class PlaythroughsService:
                     hours = bulk_request.data["hours"]  # type: ignore[index]
                     try:
                         hours_val = float(hours)
-                    except Exception:  # noqa: BLE001
+                    except Exception:  # pylint: disable=broad-exception-caught
                         failed_items.append(
                             BulkFailedItem(
                                 id=playthrough_id, error="Invalid hours value"
@@ -972,7 +979,7 @@ class PlaythroughsService:
                     self.db.commit()
                     successful_items.append(BulkResultItem(id=playthrough_id))
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 self.db.rollback()
                 failed_items.append(BulkFailedItem(id=playthrough_id, error=str(e)))
 

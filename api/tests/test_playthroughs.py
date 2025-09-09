@@ -2313,9 +2313,9 @@ def test_bulk_response_format(test_data):
     assert isinstance(data["items"], list)
     assert data["success"] is True
 
-    # For successful operations, these fields should not be present
-    assert "failed_count" not in data
-    assert "failed_items" not in data
+    # For successful operations, these fields should be None
+    assert data["failed_count"] is None
+    assert data["failed_items"] is None
 
 
 def test_bulk_invalid_status_enum(test_data):
@@ -2336,6 +2336,32 @@ def test_bulk_invalid_status_enum(test_data):
     assert "invalid status" in error_message.lower()
     assert "invalid_status" in error_message.lower()
     assert "valid values are:" in error_message.lower()
+
+
+def test_bulk_oversized_playthrough_ids():
+    """Test bulk request with too many playthrough IDs (>100)."""
+    # Create a list with 101 IDs (exceeds max_length=100)
+    oversized_ids = [f"pt-{i:03d}" for i in range(1, 102)]  # 101 items
+
+    bulk_data = {
+        "action": "update_status",
+        "playthrough_ids": oversized_ids,
+        "data": {"status": "ON_HOLD"},
+    }
+
+    response = client.post(
+        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
+    )
+    assert response.status_code == 422  # Validation error
+    error_data = response.json()
+    assert "invalid request data" in error_data["message"].lower()
+
+    # Check that the error mentions the list size constraint
+    error_details = error_data.get("details", [])
+    assert len(error_details) > 0
+    assert error_details[0]["field"] == "playthrough_ids"
+    assert "100" in error_details[0]["message"]
+    assert "101" in error_details[0]["message"]
 
 
 # ===== Backlog Endpoint Tests =====

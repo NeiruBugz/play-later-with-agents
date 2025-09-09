@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from app.utils import format_datetime
 import logging
-import typing as t
 import uuid
 
 from fastapi import HTTPException, Request
@@ -12,6 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.models import ErrorDetail, ErrorResponse
+from app.utils import format_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ def _format_response(
     return resp
 
 
-async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:  # type: ignore[override]
+async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:  # type: ignore[override] # pylint: disable=line-too-long
     code = exc.status_code
     if code == 401:
         err = "authentication_required"
@@ -104,7 +103,7 @@ def register_exception_handlers(app) -> None:
     app.add_exception_handler(RequestValidationError, handle_request_validation_error)
 
 
-async def request_id_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+async def request_id_middleware(request: Request, call_next):  # type: ignore[no-untyped-def] # pylint: disable=line-too-long
     # Attach a request id if not present
     if not getattr(request.state, "request_id", None):
         request.state.request_id = uuid.uuid4().hex

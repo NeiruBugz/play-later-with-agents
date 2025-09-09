@@ -6,10 +6,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Column, DateTime, String, func
+from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Session, Mapped, mapped_column
 
-from app.db import SessionLocal
 from app.db import Base as _Base
 
 

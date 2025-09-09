@@ -39,7 +39,7 @@ router = APIRouter(prefix="/playthroughs", tags=["playthroughs"])
 
 @router.get("", response_model=PlaythroughListResponse)
 async def list_playthroughs(
-    status: Optional[list[PlaythroughStatus]] = Query(
+    playthrough_status: Optional[list[PlaythroughStatus]] = Query(
         None, description="Filter by playthrough status"
     ),
     platform: Optional[list[str]] = Query(None, description="Filter by platforms"),
@@ -86,7 +86,7 @@ async def list_playthroughs(
     try:
         return service.list_playthroughs(
             current_user=current_user,
-            status_=status,
+            status_=playthrough_status,
             platform=platform,
             rating_min=rating_min,
             rating_max=rating_max,
@@ -105,7 +105,7 @@ async def list_playthroughs(
             offset=offset,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
 
 @router.post(
@@ -121,11 +121,11 @@ async def create_playthrough(
             current_user=current_user, playthrough_data=playthrough_data
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/backlog", response_model=BacklogResponse)
@@ -182,7 +182,7 @@ async def get_playthrough_by_id(
             current_user=current_user, playthrough_id=playthrough_id
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.put("/{playthrough_id}", response_model=PlaythroughResponse)
@@ -199,11 +199,11 @@ async def update_playthrough(
             update_data=update_data,
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{playthrough_id}/complete", response_model=PlaythroughResponse)
@@ -220,13 +220,13 @@ async def complete_playthrough(
             completion_data=completion_data,
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ConflictError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/{playthrough_id}", response_model=PlaythroughDeleteResponse)
@@ -240,9 +240,9 @@ async def delete_playthrough(
             current_user=current_user, playthrough_id=playthrough_id
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except OperationError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/bulk", response_model=PlaythroughBulkResponse)
@@ -257,9 +257,9 @@ async def bulk_playthrough_operations(
             current_user=current_user, bulk_request=bulk_request
         )
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
     except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if data.get("success"):
         response.status_code = 200
     else:

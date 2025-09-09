@@ -265,11 +265,11 @@ class CollectionService:
             self.db.add(collection_item)
             self.db.commit()
             self.db.refresh(collection_item)
-        except IntegrityError:
+        except IntegrityError as exc:
             self.db.rollback()
             raise ConflictError(
                 "Collection item already exists for this user, game, and platform"
-            )
+            ) from exc
 
         playthroughs = self.db.scalars(
             select(Playthrough).where(Playthrough.collection_id == collection_item.id)
@@ -504,20 +504,20 @@ class CollectionService:
             "is_active": collection_item.is_active,
         }
 
-    def bulk_collection_operations(
+    def bulk_collection_operations(  # pylint: disable=too-many-branches
         self, *, current_user: CurrentUser, request: BulkCollectionRequest
     ) -> BulkCollectionResponse:
         # Validate action-specific required data
         if request.action == BulkCollectionAction.UPDATE_PRIORITY:
             if not request.data or "priority" not in request.data:
-                from app.services.errors import BadRequestError
+                from app.services.errors import BadRequestError  # pylint: disable=import-outside-toplevel
 
                 raise BadRequestError(
                     "Priority data is required for update_priority action"
                 )
         elif request.action == BulkCollectionAction.UPDATE_PLATFORM:
             if not request.data or "platform" not in request.data:
-                from app.services.errors import BadRequestError
+                from app.services.errors import BadRequestError  # pylint: disable=import-outside-toplevel
 
                 raise BadRequestError(
                     "Platform data is required for update_platform action"
@@ -599,7 +599,7 @@ class CollectionService:
                 )
                 updated_count += 1
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 self.db.rollback()
                 results.append(
                     BulkCollectionResult(id=collection_id, success=False, error=str(e))

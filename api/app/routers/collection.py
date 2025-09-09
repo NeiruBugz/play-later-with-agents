@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Response, status
@@ -14,12 +15,8 @@ from app.schemas import (
     AcquisitionType,
     BulkCollectionRequest,
     BulkCollectionResponse,
-    BulkCollectionResult,
-    BulkCollectionAction,
     CollectionStats,
 )
-
-import logging
 from app.services.deps import get_collection_service
 from app.services.collection_service import CollectionService
 from app.services.errors import (
@@ -73,7 +70,7 @@ async def list_collection(
             offset=offset,
         )
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from e
 
 
 @router.get("/stats", response_model=CollectionStats)
@@ -99,9 +96,9 @@ async def create_collection_item(
             current_user=current_user, item_data=item_data
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ConflictError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e)) from e
 
 
 @router.get("/{collection_id}", response_model=CollectionItemExpanded)
@@ -116,7 +113,7 @@ async def get_collection_item(
             current_user=current_user, collection_id=collection_id
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.put("/{collection_id}", response_model=CollectionItemExpanded)
@@ -134,7 +131,7 @@ async def update_collection_item(
             update_data=update_data,
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.delete("/{collection_id}")
@@ -144,7 +141,9 @@ async def delete_collection_item(
     current_user: CurrentUser = Depends(get_current_user),
     service: CollectionService = Depends(get_collection_service),
 ) -> dict:
-    """Delete a collection item (soft delete by default, hard delete with safeguards)."""
+    """Delete a collection item (soft delete by default, hard delete with
+    safeguards).
+    """
     try:
         return service.delete_collection_item(
             current_user=current_user,
@@ -152,9 +151,9 @@ async def delete_collection_item(
             hard_delete=hard_delete,
         )
     except NotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except ConflictError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e)) from e
 
 
 @router.post("/bulk", response_model=BulkCollectionResponse)
@@ -169,7 +168,7 @@ async def bulk_collection_operations(
             current_user=current_user, request=request
         )
     except BadRequestError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not response.success:
         return Response(
             content=response.model_dump_json(),

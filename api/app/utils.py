@@ -4,7 +4,7 @@ from datetime import datetime, date, timezone
 from typing import Optional, Union
 
 
-def format_datetime(dt: Optional[Union[datetime, date]]) -> Optional[str]:
+def format_datetime(dt: Optional[Union[datetime, date]]) -> Optional[str]:  # pylint: disable=too-many-return-statements
     """
     Format datetime or date to ISO string with consistent timezone format.
 

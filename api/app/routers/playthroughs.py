@@ -40,7 +40,7 @@ router = APIRouter(prefix="/playthroughs", tags=["playthroughs"])
 @router.get("", response_model=PlaythroughListResponse)
 async def list_playthroughs(
     playthrough_status: Optional[list[PlaythroughStatus]] = Query(
-        None, description="Filter by playthrough status"
+        None, alias="status", description="Filter by playthrough status"
     ),
     platform: Optional[list[str]] = Query(None, description="Filter by platforms"),
     rating_min: Optional[int] = Query(

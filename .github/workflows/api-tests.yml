@@ -48,6 +48,12 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
 
+      - name: Check Ruff formatting
+        run: poetry run ruff format --check app/
+
+      - name: Run Ruff linting
+        run: poetry run ruff check app/
+
       - name: Run Pylint
         run: poetry run pylint app/
 

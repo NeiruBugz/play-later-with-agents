@@ -703,7 +703,7 @@
         "operationId": "list_playthroughs_api_v1_playthroughs_get",
         "parameters": [
           {
-            "name": "playthrough_status",
+            "name": "status",
             "in": "query",
             "required": false,
             "schema": {
@@ -719,7 +719,7 @@
                 }
               ],
               "description": "Filter by playthrough status",
-              "title": "Playthrough Status"
+              "title": "Status"
             },
             "description": "Filter by playthrough status"
           },

@@ -79,9 +79,7 @@ class CollectionService:
             sort_column = Game.title
         else:
             sort_column = getattr(CollectionItem, sort_by.value)
-        query = query.order_by(
-            desc(sort_column) if sort_order == "desc" else asc(sort_column)
-        )
+        query = query.order_by(desc(sort_column) if sort_order == "desc" else asc(sort_column))
 
         count_query = select(func.count()).select_from(query.subquery())
         total_count = self.db.scalar(count_query)
@@ -93,9 +91,7 @@ class CollectionService:
         collection_ids = [ci.id for ci, _ in results]
         pts_by_cid: dict[str, list[Playthrough]] = {}
         if collection_ids:
-            all_pts = self.db.scalars(
-                select(Playthrough).where(Playthrough.collection_id.in_(collection_ids))
-            ).all()
+            all_pts = self.db.scalars(select(Playthrough).where(Playthrough.collection_id.in_(collection_ids))).all()
             for pt in all_pts:
                 pts_by_cid.setdefault(pt.collection_id, []).append(pt)
 
@@ -151,9 +147,7 @@ class CollectionService:
             offset=offset,
             filters_applied={
                 "platform": platform,
-                "acquisition_type": acquisition_type.value
-                if acquisition_type
-                else None,
+                "acquisition_type": acquisition_type.value if acquisition_type else None,
                 "priority": priority,
                 "is_active": is_active,
                 "search": search,
@@ -199,12 +193,8 @@ class CollectionService:
             priority = str(item.priority) if item.priority is not None else "null"
             by_priority[priority] = by_priority.get(priority, 0) + 1
 
-        digital_items = sum(
-            1 for item in collection_items if item.acquisition_type == "DIGITAL"
-        )
-        physical_items = sum(
-            1 for item in collection_items if item.acquisition_type == "PHYSICAL"
-        )
+        digital_items = sum(1 for item in collection_items if item.acquisition_type == "DIGITAL")
+        physical_items = sum(1 for item in collection_items if item.acquisition_type == "PHYSICAL")
 
         value_estimate = {
             "digital": round(digital_items * 45.99, 2),
@@ -213,9 +203,7 @@ class CollectionService:
         }
 
         recent_additions = []
-        items_with_acquired_at = [
-            (item, game) for item, game in results if item.acquired_at is not None
-        ]
+        items_with_acquired_at = [(item, game) for item, game in results if item.acquired_at is not None]
         items_with_acquired_at.sort(key=lambda x: x[0].acquired_at, reverse=True)
 
         for item, game in items_with_acquired_at[:5]:
@@ -267,13 +255,9 @@ class CollectionService:
             self.db.refresh(collection_item)
         except IntegrityError as exc:
             self.db.rollback()
-            raise ConflictError(
-                "Collection item already exists for this user, game, and platform"
-            ) from exc
+            raise ConflictError("Collection item already exists for this user, game, and platform") from exc
 
-        playthroughs = self.db.scalars(
-            select(Playthrough).where(Playthrough.collection_id == collection_item.id)
-        ).all()
+        playthroughs = self.db.scalars(select(Playthrough).where(Playthrough.collection_id == collection_item.id)).all()
 
         game_detail = GameDetail(
             id=game.id,
@@ -315,9 +299,7 @@ class CollectionService:
             updated_at=collection_item.updated_at,
         )
 
-    def get_collection_item(
-        self, *, current_user: CurrentUser, collection_id: str
-    ) -> CollectionItemExpanded:
+    def get_collection_item(self, *, current_user: CurrentUser, collection_id: str) -> CollectionItemExpanded:
         query = (
             select(CollectionItem, Game)
             .join(Game, CollectionItem.game_id == Game.id)
@@ -334,9 +316,7 @@ class CollectionService:
 
         collection_item, game = result
 
-        playthroughs = self.db.scalars(
-            select(Playthrough).where(Playthrough.collection_id == collection_item.id)
-        ).all()
+        playthroughs = self.db.scalars(select(Playthrough).where(Playthrough.collection_id == collection_item.id)).all()
 
         game_detail = GameDetail(
             id=game.id,
@@ -420,9 +400,7 @@ class CollectionService:
             self.db.commit()
             self.db.refresh(collection_item)
 
-        playthroughs = self.db.scalars(
-            select(Playthrough).where(Playthrough.collection_id == collection_item.id)
-        ).all()
+        playthroughs = self.db.scalars(select(Playthrough).where(Playthrough.collection_id == collection_item.id)).all()
 
         game_detail = GameDetail(
             id=game.id,
@@ -464,9 +442,7 @@ class CollectionService:
             updated_at=collection_item.updated_at,
         )
 
-    def delete_collection_item(
-        self, *, current_user: CurrentUser, collection_id: str, hard_delete: bool
-    ) -> dict:
+    def delete_collection_item(self, *, current_user: CurrentUser, collection_id: str, hard_delete: bool) -> dict:
         query = select(CollectionItem).where(
             and_(
                 CollectionItem.id == collection_id,
@@ -479,14 +455,10 @@ class CollectionService:
 
         if hard_delete:
             playthrough_count = self.db.scalar(
-                select(func.count(Playthrough.id)).where(
-                    Playthrough.collection_id == collection_item.id
-                )
+                select(func.count(Playthrough.id)).where(Playthrough.collection_id == collection_item.id)
             )
             if playthrough_count and playthrough_count > 0:
-                raise ConflictError(
-                    "Cannot hard delete: collection item has associated playthroughs"
-                )
+                raise ConflictError("Cannot hard delete: collection item has associated playthroughs")
             self.db.delete(collection_item)
             self.db.commit()
             return {
@@ -512,16 +484,12 @@ class CollectionService:
             if not request.data or "priority" not in request.data:
                 from app.services.errors import BadRequestError  # pylint: disable=import-outside-toplevel
 
-                raise BadRequestError(
-                    "Priority data is required for update_priority action"
-                )
+                raise BadRequestError("Priority data is required for update_priority action")
         elif request.action == BulkCollectionAction.UPDATE_PLATFORM:
             if not request.data or "platform" not in request.data:
                 from app.services.errors import BadRequestError  # pylint: disable=import-outside-toplevel
 
-                raise BadRequestError(
-                    "Platform data is required for update_platform action"
-                )
+                raise BadRequestError("Platform data is required for update_platform action")
         results: list[BulkCollectionResult] = []
         updated_count = 0
 
@@ -601,9 +569,7 @@ class CollectionService:
 
             except Exception as e:  # pylint: disable=broad-exception-caught
                 self.db.rollback()
-                results.append(
-                    BulkCollectionResult(id=collection_id, success=False, error=str(e))
-                )
+                results.append(BulkCollectionResult(id=collection_id, success=False, error=str(e)))
 
         total_count = len(request.collection_ids)
         all_successful = updated_count == total_count

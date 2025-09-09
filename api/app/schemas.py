@@ -89,28 +89,16 @@ class CollectionSnippet(BaseModel):
 class CollectionItemCreate(BaseModel):
     game_id: str = Field(..., description="Game ID to add to collection")
     platform: str = Field(..., description="Gaming platform")
-    acquisition_type: AcquisitionType = Field(
-        ..., description="How the game was acquired"
-    )
-    acquired_at: Optional[datetime] = Field(
-        None, description="When the game was acquired"
-    )
-    priority: Optional[int] = Field(
-        default=None, ge=1, le=5, description="Priority level (1-5)"
-    )
+    acquisition_type: AcquisitionType = Field(..., description="How the game was acquired")
+    acquired_at: Optional[datetime] = Field(None, description="When the game was acquired")
+    priority: Optional[int] = Field(default=None, ge=1, le=5, description="Priority level (1-5)")
     notes: Optional[str] = Field(None, description="Personal notes about the game")
 
 
 class CollectionItemUpdate(BaseModel):
-    acquisition_type: Optional[AcquisitionType] = Field(
-        None, description="How the game was acquired"
-    )
-    acquired_at: Optional[datetime] = Field(
-        None, description="When the game was acquired"
-    )
-    priority: Optional[int] = Field(
-        None, ge=1, le=5, description="Priority level (1-5)"
-    )
+    acquisition_type: Optional[AcquisitionType] = Field(None, description="How the game was acquired")
+    acquired_at: Optional[datetime] = Field(None, description="When the game was acquired")
+    priority: Optional[int] = Field(None, ge=1, le=5, description="Priority level (1-5)")
     is_active: Optional[bool] = Field(None, description="Whether the item is active")
     notes: Optional[str] = Field(None, description="Personal notes about the game")
 
@@ -171,47 +159,29 @@ class CollectionStats(BaseModel):
 
 class PlaythroughCreate(BaseModel):
     game_id: str = Field(..., description="Game ID for the playthrough")
-    collection_id: Optional[str] = Field(
-        None, description="Optional collection item ID"
-    )
+    collection_id: Optional[str] = Field(None, description="Optional collection item ID")
     status: PlaythroughStatus = Field(..., description="Playthrough status")
     platform: str = Field(..., description="Gaming platform")
-    started_at: Optional[datetime] = Field(
-        None, description="When the playthrough was started"
-    )
-    completed_at: Optional[datetime] = Field(
-        None, description="When the playthrough was completed"
-    )
-    play_time_hours: Optional[float] = Field(
-        default=None, ge=0, description="Play time in hours"
-    )
+    started_at: Optional[datetime] = Field(None, description="When the playthrough was started")
+    completed_at: Optional[datetime] = Field(None, description="When the playthrough was completed")
+    play_time_hours: Optional[float] = Field(default=None, ge=0, description="Play time in hours")
     playthrough_type: Optional[str] = Field(
         None, description="Type of playthrough (e.g., 'First Run', '100% Completion')"
     )
     difficulty: Optional[str] = Field(None, description="Difficulty level")
-    rating: Optional[int] = Field(
-        default=None, ge=1, le=10, description="Personal rating (1-10)"
-    )
-    notes: Optional[str] = Field(
-        None, description="Personal notes about the playthrough"
-    )
+    rating: Optional[int] = Field(default=None, ge=1, le=10, description="Personal rating (1-10)")
+    notes: Optional[str] = Field(None, description="Personal notes about the playthrough")
 
     @model_validator(mode="after")
     def validate_playthrough_invariants(self):
         # Ensure started_at <= completed_at when both provided
-        if (
-            self.started_at
-            and self.completed_at
-            and self.started_at > self.completed_at
-        ):
+        if self.started_at and self.completed_at and self.started_at > self.completed_at:
             raise ValueError("started_at must be <= completed_at")
 
         # Ensure completed_at is set when status indicates completion
         completion_statuses = {PlaythroughStatus.COMPLETED, PlaythroughStatus.MASTERED}
         if self.status in completion_statuses and self.completed_at is None:
-            raise ValueError(
-                f"completed_at must be set when status is {self.status.value}"
-            )
+            raise ValueError(f"completed_at must be set when status is {self.status.value}")
 
         # Ensure completed_at is None if status is not a completed state
         non_completion_statuses = {
@@ -220,9 +190,7 @@ class PlaythroughCreate(BaseModel):
             PlaythroughStatus.ON_HOLD,
         }
         if self.status in non_completion_statuses and self.completed_at is not None:
-            raise ValueError(
-                f"completed_at must be None when status is {self.status.value}"
-            )
+            raise ValueError(f"completed_at must be None when status is {self.status.value}")
 
         # Validate play_time_hours is non-negative
         # (already handled by Field constraint, but included for clarity)
@@ -235,34 +203,20 @@ class PlaythroughCreate(BaseModel):
 class PlaythroughUpdate(BaseModel):
     status: Optional[PlaythroughStatus] = Field(None, description="Playthrough status")
     platform: Optional[str] = Field(None, description="Gaming platform")
-    started_at: Optional[datetime] = Field(
-        None, description="When the playthrough was started"
-    )
-    completed_at: Optional[datetime] = Field(
-        None, description="When the playthrough was completed"
-    )
-    play_time_hours: Optional[float] = Field(
-        default=None, ge=0, description="Play time in hours"
-    )
+    started_at: Optional[datetime] = Field(None, description="When the playthrough was started")
+    completed_at: Optional[datetime] = Field(None, description="When the playthrough was completed")
+    play_time_hours: Optional[float] = Field(default=None, ge=0, description="Play time in hours")
     playthrough_type: Optional[str] = Field(
         None, description="Type of playthrough (e.g., 'First Run', '100% Completion')"
     )
     difficulty: Optional[str] = Field(None, description="Difficulty level")
-    rating: Optional[int] = Field(
-        default=None, ge=1, le=10, description="Personal rating (1-10)"
-    )
-    notes: Optional[str] = Field(
-        None, description="Personal notes about the playthrough"
-    )
+    rating: Optional[int] = Field(default=None, ge=1, le=10, description="Personal rating (1-10)")
+    notes: Optional[str] = Field(None, description="Personal notes about the playthrough")
 
     @model_validator(mode="after")
     def validate_playthrough_invariants(self):
         # Ensure started_at <= completed_at when both provided
-        if (
-            self.started_at
-            and self.completed_at
-            and self.started_at > self.completed_at
-        ):
+        if self.started_at and self.completed_at and self.started_at > self.completed_at:
             raise ValueError("started_at must be <= completed_at")
 
         # For updates, we don't enforce completion status constraints because:
@@ -287,15 +241,9 @@ class PlaythroughComplete(BaseModel):
         None,
         description="When the playthrough was completed (auto-set if not provided)",
     )
-    final_play_time_hours: Optional[float] = Field(
-        default=None, ge=0, description="Final play time in hours"
-    )
-    rating: Optional[int] = Field(
-        default=None, ge=1, le=10, description="Final rating (1-10)"
-    )
-    final_notes: Optional[str] = Field(
-        None, description="Final notes about the playthrough"
-    )
+    final_play_time_hours: Optional[float] = Field(default=None, ge=0, description="Final play time in hours")
+    rating: Optional[int] = Field(default=None, ge=1, le=10, description="Final rating (1-10)")
+    final_notes: Optional[str] = Field(None, description="Final notes about the playthrough")
 
     @model_validator(mode="after")
     def validate_completion_invariants(self):
@@ -321,9 +269,7 @@ class BulkAction(str, Enum):
 
 class PlaythroughBulkRequest(BaseModel):
     action: BulkAction = Field(..., description="Bulk action to perform")
-    playthrough_ids: list[str] = Field(
-        ..., min_length=1, max_length=100, description="List of playthrough IDs"
-    )
+    playthrough_ids: list[str] = Field(..., min_length=1, max_length=100, description="List of playthrough IDs")
     data: Optional[dict] = Field(None, description="Action-specific data")
 
 
@@ -341,16 +287,10 @@ class BulkFailedItem(BaseModel):
 
 class PlaythroughBulkResponse(BaseModel):
     success: bool = Field(..., description="Whether the operation was fully successful")
-    updated_count: int = Field(
-        ..., description="Number of playthroughs successfully updated"
-    )
-    failed_count: Optional[int] = Field(
-        None, description="Number of playthroughs that failed (for partial success)"
-    )
+    updated_count: int = Field(..., description="Number of playthroughs successfully updated")
+    failed_count: Optional[int] = Field(None, description="Number of playthroughs that failed (for partial success)")
     items: list[BulkResultItem] = Field(..., description="Successfully updated items")
-    failed_items: Optional[list[BulkFailedItem]] = Field(
-        None, description="Failed items (for partial success)"
-    )
+    failed_items: Optional[list[BulkFailedItem]] = Field(None, description="Failed items (for partial success)")
 
 
 class PlaythroughResponse(BaseModel):
@@ -499,9 +439,7 @@ class BulkCollectionAction(str, Enum):
 
 class BulkCollectionRequest(BaseModel):
     action: BulkCollectionAction = Field(..., description="The action to perform")
-    collection_ids: list[str] = Field(
-        ..., min_length=1, description="Collection item IDs to update"
-    )
+    collection_ids: list[str] = Field(..., min_length=1, description="Collection item IDs to update")
     data: Optional[dict] = Field(None, description="Action-specific data")
 
 

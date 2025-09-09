@@ -61,16 +61,12 @@ async def handle_http_exception(request: Request, exc: HTTPException) -> JSONRes
     return _format_response(request, status_code=code, error=err, message=message)
 
 
-async def handle_starlette_http_exception(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def handle_starlette_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     # Delegate to the same handler logic
     return await handle_http_exception(request, exc)  # type: ignore[arg-type]
 
 
-async def handle_request_validation_error(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def handle_request_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
     details: list[ErrorDetail] = []
     for e in exc.errors():
         loc = e.get("loc", [])

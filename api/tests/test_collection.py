@@ -187,17 +187,13 @@ def test_list_collection_basic(test_data):
 def test_list_collection_with_is_active_filter(test_data):
     """Test filtering by is_active status."""
     # Get active items only
-    response = client.get(
-        "/api/v1/collection?is_active=true", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?is_active=true", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # col1 and col2 are active
 
     # Get inactive items only
-    response = client.get(
-        "/api/v1/collection?is_active=false", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?is_active=false", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # col3 is inactive
@@ -205,16 +201,12 @@ def test_list_collection_with_is_active_filter(test_data):
 
 def test_list_collection_with_platform_filter(test_data):
     """Test filtering by platform."""
-    response = client.get(
-        "/api/v1/collection?platform=PC", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?platform=PC", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # game1 and game3 on PC
 
-    response = client.get(
-        "/api/v1/collection?platform=PS5", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?platform=PS5", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # game2 on PS5
@@ -222,16 +214,12 @@ def test_list_collection_with_platform_filter(test_data):
 
 def test_list_collection_with_acquisition_type_filter(test_data):
     """Test filtering by acquisition type."""
-    response = client.get(
-        "/api/v1/collection?acquisition_type=DIGITAL", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?acquisition_type=DIGITAL", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # game1 and game3 are digital
 
-    response = client.get(
-        "/api/v1/collection?acquisition_type=PHYSICAL", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?acquisition_type=PHYSICAL", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # game2 is physical
@@ -239,9 +227,7 @@ def test_list_collection_with_acquisition_type_filter(test_data):
 
 def test_list_collection_with_priority_filter(test_data):
     """Test filtering by priority."""
-    response = client.get(
-        "/api/v1/collection?priority=1", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?priority=1", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only game1 has priority 1
@@ -250,18 +236,14 @@ def test_list_collection_with_priority_filter(test_data):
 def test_list_collection_with_search(test_data):
     """Test search functionality."""
     # Search in game title
-    response = client.get(
-        "/api/v1/collection?search=witcher", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?search=witcher", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1
     assert data["items"][0]["game"]["title"] == "The Witcher 3"
 
     # Search in notes
-    response = client.get(
-        "/api/v1/collection?search=souls-like", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?search=souls-like", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1
@@ -328,9 +310,7 @@ def test_list_collection_with_playthroughs(test_data):
     data = response.json()
 
     # Find The Witcher 3 item (should have 1 playthrough)
-    witcher_item = next(
-        item for item in data["items"] if item["game"]["title"] == "The Witcher 3"
-    )
+    witcher_item = next(item for item in data["items"] if item["game"]["title"] == "The Witcher 3")
 
     assert len(witcher_item["playthroughs"]) == 1
     playthrough = witcher_item["playthroughs"][0]
@@ -396,21 +376,15 @@ def test_list_collection_filters_applied_in_response(test_data):
 def test_list_collection_invalid_parameters(test_data):
     """Test validation of query parameters."""
     # Invalid sort_order
-    response = client.get(
-        "/api/v1/collection?sort_order=invalid", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?sort_order=invalid", headers={"X-User-Id": "user1"})
     assert response.status_code == 422
 
     # Invalid priority (out of range)
-    response = client.get(
-        "/api/v1/collection?priority=10", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?priority=10", headers={"X-User-Id": "user1"})
     assert response.status_code == 422
 
     # Invalid limit (too high)
-    response = client.get(
-        "/api/v1/collection?limit=1000", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection?limit=1000", headers={"X-User-Id": "user1"})
     assert response.status_code == 422
 
 
@@ -699,9 +673,7 @@ def test_get_collection_item_without_playthroughs(test_data):
 
 def test_get_collection_item_not_found(test_data):
     """Test 404 when collection item doesn't exist."""
-    response = client.get(
-        "/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"}
-    )
+    response = client.get("/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"})
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
 
@@ -825,9 +797,7 @@ def test_update_collection_item_success(test_data):
         "is_active": False,
     }
 
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json=update_data
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json=update_data)
     assert response.status_code == 200
 
     data = response.json()
@@ -898,9 +868,7 @@ def test_update_collection_item_acquired_at(test_data):
 
 def test_update_collection_item_notes_to_null(test_data):
     """Test setting notes to empty/null."""
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"notes": ""}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"notes": ""})
     assert response.status_code == 200
 
     data = response.json()
@@ -932,15 +900,11 @@ def test_update_collection_item_wrong_user(test_data):
 def test_update_collection_item_invalid_priority(test_data):
     """Test validation of priority field."""
     # Priority too low
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 0}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 0})
     assert response.status_code == 422
 
     # Priority too high
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 6}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 6})
     assert response.status_code == 422
 
 
@@ -972,9 +936,7 @@ def test_update_collection_item_all_acquisition_types(test_data):
 
 def test_update_collection_item_preserves_playthroughs(test_data):
     """Test that update preserves existing playthrough data."""
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 4}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 4})
     assert response.status_code == 200
 
     data = response.json()
@@ -988,25 +950,19 @@ def test_update_collection_item_preserves_playthroughs(test_data):
 def test_update_collection_item_user_isolation(test_data):
     """Test proper user isolation during updates."""
     # User1 can update their own items
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 2}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user1"}, json={"priority": 2})
     assert response.status_code == 200
     assert response.json()["user_id"] == "user1"
     assert response.json()["priority"] == 2
 
     # User2 can update their own items
-    response = client.put(
-        "/api/v1/collection/col4", headers={"X-User-Id": "user2"}, json={"priority": 3}
-    )
+    response = client.put("/api/v1/collection/col4", headers={"X-User-Id": "user2"}, json={"priority": 3})
     assert response.status_code == 200
     assert response.json()["user_id"] == "user2"
     assert response.json()["priority"] == 3
 
     # But user2 cannot update user1's items
-    response = client.put(
-        "/api/v1/collection/col1", headers={"X-User-Id": "user2"}, json={"priority": 5}
-    )
+    response = client.put("/api/v1/collection/col1", headers={"X-User-Id": "user2"}, json={"priority": 5})
     assert response.status_code == 404
 
 
@@ -1081,9 +1037,7 @@ def test_delete_collection_item_hard_delete_success(test_data):
     assert response.status_code == 200
 
     # Perform hard delete
-    response = client.delete(
-        "/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1097,9 +1051,7 @@ def test_delete_collection_item_hard_delete_success(test_data):
 
 def test_delete_collection_item_not_found(test_data):
     """Test 404 when collection item doesn't exist."""
-    response = client.delete(
-        "/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/nonexistent", headers={"X-User-Id": "user1"})
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
 
@@ -1117,14 +1069,9 @@ def test_delete_collection_item_wrong_user(test_data):
 def test_delete_collection_item_hard_delete_with_playthroughs_fails(test_data):
     """Test that hard delete fails when collection item has associated playthroughs."""
     # col1 has a playthrough (pt1), so hard delete should fail
-    response = client.delete(
-        "/api/v1/collection/col1?hard_delete=true", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/col1?hard_delete=true", headers={"X-User-Id": "user1"})
     assert response.status_code == 409
-    assert (
-        "Cannot hard delete: collection item has associated playthroughs"
-        in response.json()["message"]
-    )
+    assert "Cannot hard delete: collection item has associated playthroughs" in response.json()["message"]
 
     # Verify item still exists
     response = client.get("/api/v1/collection/col1", headers={"X-User-Id": "user1"})
@@ -1168,9 +1115,7 @@ def test_delete_collection_item_already_soft_deleted(test_data):
 def test_delete_collection_item_hard_delete_no_playthroughs(test_data):
     """Test hard delete succeeds when no associated playthroughs exist."""
     # col3 has no playthroughs, so hard delete should work
-    response = client.delete(
-        "/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/col3?hard_delete=true", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1200,17 +1145,13 @@ def test_delete_collection_item_user_isolation(test_data):
 def test_delete_collection_item_query_param_variations(test_data):
     """Test different query parameter formats for hard_delete."""
     # Test hard_delete=false (explicit soft delete)
-    response = client.delete(
-        "/api/v1/collection/col2?hard_delete=false", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/col2?hard_delete=false", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     assert response.json()["message"] == "Collection item soft deleted"
     assert response.json()["is_active"] is False
 
     # Test hard_delete=True (case insensitive)
-    response = client.delete(
-        "/api/v1/collection/col3?hard_delete=True", headers={"X-User-Id": "user1"}
-    )
+    response = client.delete("/api/v1/collection/col3?hard_delete=True", headers={"X-User-Id": "user1"})
     assert response.status_code == 200
     assert response.json()["message"] == "Collection item permanently deleted"
 
@@ -1314,9 +1255,7 @@ def test_bulk_update_platform_all_success(test_data):
 
     # Verify the updates by getting the items
     for col_id in ["col1", "col3"]:
-        response = client.get(
-            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
-        )
+        response = client.get(f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"})
         assert response.status_code == 200
         assert response.json()["platform"] == "Xbox"
 
@@ -1337,9 +1276,7 @@ def test_bulk_hide_all_success(test_data):
 
     # Verify items are hidden
     for col_id in ["col1", "col2"]:
-        response = client.get(
-            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
-        )
+        response = client.get(f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"})
         assert response.status_code == 200
         assert response.json()["is_active"] is False
 
@@ -1372,9 +1309,7 @@ def test_bulk_activate_all_success(test_data):
 
     # Verify items are active
     for col_id in ["col1", "col2", "col3"]:
-        response = client.get(
-            f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"}
-        )
+        response = client.get(f"/api/v1/collection/{col_id}", headers={"X-User-Id": "user1"})
         assert response.status_code == 200
         assert response.json()["is_active"] is True
 
@@ -1537,9 +1472,7 @@ def test_bulk_operations_large_batch(test_data):
     with SessionLocal() as db:
         # Create additional collection items
         additional_items = []
-        for i in range(
-            4, 8
-        ):  # col4-col7 (col4 is used by user2, so let's use col5-col8)
+        for i in range(4, 8):  # col4-col7 (col4 is used by user2, so let's use col5-col8)
             col_id = f"col{i+1}"
             item = CollectionItem(
                 id=col_id,
@@ -1791,9 +1724,7 @@ def test_collection_stats_aggregation_accuracy(test_data):
         "Steam": 1,  # one new Steam item
     }
     for platform, expected_count in expected_platforms.items():
-        assert (
-            data["by_platform"][platform] == expected_count
-        ), f"Platform {platform} count mismatch"
+        assert data["by_platform"][platform] == expected_count, f"Platform {platform} count mismatch"
 
     # Acquisition type verification
     expected_acquisition = {
@@ -1803,9 +1734,7 @@ def test_collection_stats_aggregation_accuracy(test_data):
         "RENTAL": 1,  # new Steam item
     }
     for acq_type, expected_count in expected_acquisition.items():
-        assert (
-            data["by_acquisition_type"][acq_type] == expected_count
-        ), f"Acquisition type {acq_type} count mismatch"
+        assert data["by_acquisition_type"][acq_type] == expected_count, f"Acquisition type {acq_type} count mismatch"
 
     # Priority verification
     expected_priorities = {
@@ -1816,9 +1745,7 @@ def test_collection_stats_aggregation_accuracy(test_data):
         "null": 1,  # new Xbox item
     }
     for priority, expected_count in expected_priorities.items():
-        assert (
-            data["by_priority"][priority] == expected_count
-        ), f"Priority {priority} count mismatch"
+        assert data["by_priority"][priority] == expected_count, f"Priority {priority} count mismatch"
 
 
 def test_collection_stats_all_fields_present(test_data):

@@ -77,32 +77,16 @@ class PlaythroughsService:
         limit: int,
         offset: int,
     ) -> PlaythroughListResponse:
-        if (
-            rating_min is not None
-            and rating_max is not None
-            and rating_min > rating_max
-        ):
+        if rating_min is not None and rating_max is not None and rating_min > rating_max:
             raise ValidationError("rating_min must be <= rating_max")
 
-        if (
-            play_time_min is not None
-            and play_time_max is not None
-            and play_time_min > play_time_max
-        ):
+        if play_time_min is not None and play_time_max is not None and play_time_min > play_time_max:
             raise ValidationError("play_time_min must be <= play_time_max")
 
-        if (
-            started_after is not None
-            and started_before is not None
-            and started_after > started_before
-        ):
+        if started_after is not None and started_before is not None and started_after > started_before:
             raise ValidationError("started_after must be <= started_before")
 
-        if (
-            completed_after is not None
-            and completed_before is not None
-            and completed_after > completed_before
-        ):
+        if completed_after is not None and completed_before is not None and completed_after > completed_before:
             raise ValidationError("completed_after must be <= completed_before")
 
         query = (
@@ -130,30 +114,16 @@ class PlaythroughsService:
         if playthrough_type:
             filters.append(Playthrough.playthrough_type.in_(playthrough_type))
         if started_after:
-            filters.append(
-                Playthrough.started_at
-                >= datetime.combine(started_after, datetime.min.time())
-            )
+            filters.append(Playthrough.started_at >= datetime.combine(started_after, datetime.min.time()))
         if started_before:
-            filters.append(
-                Playthrough.started_at
-                <= datetime.combine(started_before, datetime.max.time())
-            )
+            filters.append(Playthrough.started_at <= datetime.combine(started_before, datetime.max.time()))
         if completed_after:
-            filters.append(
-                Playthrough.completed_at
-                >= datetime.combine(completed_after, datetime.min.time())
-            )
+            filters.append(Playthrough.completed_at >= datetime.combine(completed_after, datetime.min.time()))
         if completed_before:
-            filters.append(
-                Playthrough.completed_at
-                <= datetime.combine(completed_before, datetime.max.time())
-            )
+            filters.append(Playthrough.completed_at <= datetime.combine(completed_before, datetime.max.time()))
         if search:
             search_term = f"%{search}%"
-            filters.append(
-                or_(Game.title.ilike(search_term), Playthrough.notes.ilike(search_term))
-            )
+            filters.append(or_(Game.title.ilike(search_term), Playthrough.notes.ilike(search_term)))
 
         if filters:
             query = query.where(and_(*filters))
@@ -231,18 +201,10 @@ class PlaythroughsService:
                 "play_time_max": play_time_max,
                 "difficulty": difficulty,
                 "playthrough_type": playthrough_type,
-                "started_after": format_datetime(started_after)
-                if started_after
-                else None,
-                "started_before": format_datetime(started_before)
-                if started_before
-                else None,
-                "completed_after": format_datetime(completed_after)
-                if completed_after
-                else None,
-                "completed_before": format_datetime(completed_before)
-                if completed_before
-                else None,
+                "started_after": format_datetime(started_after) if started_after else None,
+                "started_before": format_datetime(started_before) if started_before else None,
+                "completed_after": format_datetime(completed_after) if completed_after else None,
+                "completed_before": format_datetime(completed_before) if completed_before else None,
                 "search": search,
                 "sort_by": sort_by.value,
                 "sort_order": sort_order.value,
@@ -317,9 +279,7 @@ class PlaythroughsService:
             updated_at=playthrough.updated_at,
         )
 
-    def get_backlog(
-        self, *, current_user: CurrentUser, priority: Optional[int]
-    ) -> BacklogResponse:
+    def get_backlog(self, *, current_user: CurrentUser, priority: Optional[int]) -> BacklogResponse:
         query = (
             select(Playthrough, Game, CollectionItem)
             .join(Game, Playthrough.game_id == Game.id)
@@ -371,9 +331,7 @@ class PlaythroughsService:
             )
         return BacklogResponse(items=backlog_items, total_count=len(backlog_items))
 
-    def get_playing(
-        self, *, current_user: CurrentUser, platform: Optional[str]
-    ) -> PlayingResponse:
+    def get_playing(self, *, current_user: CurrentUser, platform: Optional[str]) -> PlayingResponse:
         query = (
             select(Playthrough, Game)
             .join(Game, Playthrough.game_id == Game.id)
@@ -389,9 +347,7 @@ class PlaythroughsService:
         try:
             results = self.db.execute(query).all()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Error getting playing games for user %s: %s", current_user.id, e
-            )
+            logger.error("Error getting playing games for user %s: %s", current_user.id, e)
             raise OperationError("Failed to retrieve playing games") from e
 
         playing_items: list[PlayingItem] = []
@@ -447,9 +403,7 @@ class PlaythroughsService:
         try:
             results = self.db.execute(query).all()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Error getting completed games for user %s: %s", current_user.id, e
-            )
+            logger.error("Error getting completed games for user %s: %s", current_user.id, e)
             raise OperationError("Failed to retrieve completed games") from e
 
         completed_items: list[CompletedItem] = []
@@ -479,24 +433,14 @@ class PlaythroughsService:
         completion_stats: dict[str, float | int] = {}
         if completed_items:
             completion_stats["total_completed"] = len(completed_items)
-            ratings = [
-                item.rating for item in completed_items if item.rating is not None
-            ]
+            ratings = [item.rating for item in completed_items if item.rating is not None]
             if ratings:
-                completion_stats["average_rating"] = round(
-                    sum(ratings) / len(ratings), 2
-                )
-            play_times = [
-                item.play_time_hours
-                for item in completed_items
-                if item.play_time_hours is not None
-            ]
+                completion_stats["average_rating"] = round(sum(ratings) / len(ratings), 2)
+            play_times = [item.play_time_hours for item in completed_items if item.play_time_hours is not None]
             if play_times:
                 total_time = sum(play_times)
                 completion_stats["total_play_time"] = round(total_time, 2)
-                completion_stats["average_play_time"] = round(
-                    total_time / len(play_times), 2
-                )
+                completion_stats["average_play_time"] = round(total_time / len(play_times), 2)
         else:
             completion_stats["total_completed"] = 0
 
@@ -508,25 +452,15 @@ class PlaythroughsService:
 
     def get_stats(self, *, current_user: CurrentUser) -> PlaythroughStats:
         try:
-            playthroughs = (
-                self.db.query(Playthrough)
-                .filter(Playthrough.user_id == current_user.id)
-                .all()
-            )
+            playthroughs = self.db.query(Playthrough).filter(Playthrough.user_id == current_user.id).all()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Error getting playthrough stats for user %s: %s", current_user.id, e
-            )
+            logger.error("Error getting playthrough stats for user %s: %s", current_user.id, e)
             raise OperationError("Failed to retrieve playthrough statistics") from e
 
         total_playthroughs = len(playthroughs)
         by_status: dict[str, int] = {}
         for playthrough in playthroughs:
-            status_val = (
-                playthrough.status.value
-                if hasattr(playthrough.status, "value")
-                else playthrough.status
-            )
+            status_val = playthrough.status.value if hasattr(playthrough.status, "value") else playthrough.status
             by_status[status_val] = by_status.get(status_val, 0) + 1
 
         by_platform: dict[str, int] = {}
@@ -535,10 +469,7 @@ class PlaythroughsService:
             by_platform[platform] = by_platform.get(platform, 0) + 1
 
         completed_playthroughs = [
-            p
-            for p in playthroughs
-            if p.status
-            in [PlaythroughStatus.COMPLETED.value, PlaythroughStatus.MASTERED.value]
+            p for p in playthroughs if p.status in [PlaythroughStatus.COMPLETED.value, PlaythroughStatus.MASTERED.value]
         ]
 
         completion_stats: dict[str, float] = {}
@@ -548,24 +479,16 @@ class PlaythroughsService:
         else:
             completion_stats["completion_rate"] = 0.0
 
-        completed_with_rating = [
-            p for p in completed_playthroughs if p.rating is not None
-        ]
+        completed_with_rating = [p for p in completed_playthroughs if p.rating is not None]
         if completed_with_rating:
-            avg_rating = sum(p.rating for p in completed_with_rating) / len(
-                completed_with_rating
-            )  # type: ignore[arg-type]
+            avg_rating = sum(p.rating for p in completed_with_rating) / len(completed_with_rating)  # type: ignore[arg-type]
             completion_stats["average_rating"] = round(avg_rating, 2)
 
-        playthroughs_with_time = [
-            p for p in playthroughs if p.play_time_hours is not None
-        ]
+        playthroughs_with_time = [p for p in playthroughs if p.play_time_hours is not None]
         if playthroughs_with_time:
             total_time = sum(p.play_time_hours for p in playthroughs_with_time)  # type: ignore[arg-type]
             completion_stats["total_play_time"] = round(total_time, 2)
-            completion_stats["average_play_time"] = round(
-                total_time / len(playthroughs_with_time), 2
-            )
+            completion_stats["average_play_time"] = round(total_time / len(playthroughs_with_time), 2)
 
         yearly_stats: dict[str, dict[str, float | int]] = {}
         for playthrough in completed_playthroughs:
@@ -588,9 +511,7 @@ class PlaythroughsService:
             top_genres=None,
         )
 
-    def get_playthrough_by_id(
-        self, *, current_user: CurrentUser, playthrough_id: str
-    ) -> PlaythroughDetail:
+    def get_playthrough_by_id(self, *, current_user: CurrentUser, playthrough_id: str) -> PlaythroughDetail:
         query = (
             select(Playthrough, Game, CollectionItem)
             .join(Game, Playthrough.game_id == Game.id)
@@ -684,16 +605,10 @@ class PlaythroughsService:
         if not existing_playthrough:
             raise NotFoundError("Playthrough not found")
 
-        if (
-            update_data.status
-            and update_data.status.value != existing_playthrough.status
-        ):
-            if not self._is_valid_status_transition(
-                existing_playthrough.status, update_data.status.value
-            ):
+        if update_data.status and update_data.status.value != existing_playthrough.status:
+            if not self._is_valid_status_transition(existing_playthrough.status, update_data.status.value):
                 raise ValidationError(
-                    f"Invalid status transition from {existing_playthrough.status} "
-                    f"to {update_data.status.value}"
+                    f"Invalid status transition from {existing_playthrough.status} " f"to {update_data.status.value}"
                 )
 
         update_dict = update_data.model_dump(exclude_unset=True, exclude_none=False)
@@ -706,11 +621,7 @@ class PlaythroughsService:
                 setattr(existing_playthrough, field, None)
 
         now = datetime.now(timezone.utc)
-        if (
-            update_data.status
-            and update_data.status.value == "PLAYING"
-            and not existing_playthrough.started_at
-        ):
+        if update_data.status and update_data.status.value == "PLAYING" and not existing_playthrough.started_at:
             existing_playthrough.started_at = now
         if (
             update_data.status
@@ -767,14 +678,10 @@ class PlaythroughsService:
             raise NotFoundError("Playthrough not found")
 
         if existing_playthrough.status in ["COMPLETED", "MASTERED", "DROPPED"]:
-            raise ConflictError(
-                f"Playthrough is already completed with status {existing_playthrough.status}"
-            )
+            raise ConflictError(f"Playthrough is already completed with status {existing_playthrough.status}")
 
         completion_status = completion_data.completion_type.value
-        if not self._is_valid_status_transition(
-            existing_playthrough.status, completion_status
-        ):
+        if not self._is_valid_status_transition(existing_playthrough.status, completion_status):
             raise ValidationError(
                 f"Invalid status transition from {existing_playthrough.status} to {completion_status}"
             )
@@ -840,9 +747,7 @@ class PlaythroughsService:
             self.db.commit()
             from app.schemas import PlaythroughDeleteResponse  # pylint: disable=import-outside-toplevel
 
-            return PlaythroughDeleteResponse(
-                success=True, message="Playthrough deleted successfully"
-            )
+            return PlaythroughDeleteResponse(success=True, message="Playthrough deleted successfully")
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.db.rollback()
             logger.error("Database error deleting playthrough: %s", e)
@@ -860,8 +765,7 @@ class PlaythroughsService:
             valid_statuses = {status.value for status in PlaythroughStatus}
             if status_value not in valid_statuses:
                 raise BadRequestError(
-                    f"Invalid status '{status_value}'. Valid values are: "
-                    f"{', '.join(sorted(valid_statuses))}"
+                    f"Invalid status '{status_value}'. Valid values are: " f"{', '.join(sorted(valid_statuses))}"
                 )
 
         elif bulk_request.action == BulkAction.UPDATE_PLATFORM:
@@ -895,16 +799,12 @@ class PlaythroughsService:
                     .first()
                 )
                 if not existing_playthrough:
-                    failed_items.append(
-                        BulkFailedItem(id=playthrough_id, error="Playthrough not found")
-                    )
+                    failed_items.append(BulkFailedItem(id=playthrough_id, error="Playthrough not found"))
                     continue
 
                 if bulk_request.action == BulkAction.UPDATE_STATUS:
                     new_status = bulk_request.data["status"]  # type: ignore[index]
-                    if not self._is_valid_status_transition(
-                        existing_playthrough.status, new_status
-                    ):
+                    if not self._is_valid_status_transition(existing_playthrough.status, new_status):
                         failed_items.append(
                             BulkFailedItem(
                                 id=playthrough_id,
@@ -915,10 +815,7 @@ class PlaythroughsService:
                     existing_playthrough.status = new_status
                     if new_status == "PLAYING" and not existing_playthrough.started_at:
                         existing_playthrough.started_at = now
-                    elif (
-                        new_status in ["COMPLETED", "MASTERED"]
-                        and not existing_playthrough.completed_at
-                    ):
+                    elif new_status in ["COMPLETED", "MASTERED"] and not existing_playthrough.completed_at:
                         existing_playthrough.completed_at = now
                     existing_playthrough.updated_at = now
                     self.db.commit()
@@ -948,22 +845,12 @@ class PlaythroughsService:
                     try:
                         hours_val = float(hours)
                     except Exception:  # pylint: disable=broad-exception-caught
-                        failed_items.append(
-                            BulkFailedItem(
-                                id=playthrough_id, error="Invalid hours value"
-                            )
-                        )
+                        failed_items.append(BulkFailedItem(id=playthrough_id, error="Invalid hours value"))
                         continue
                     if hours_val <= 0:
-                        failed_items.append(
-                            BulkFailedItem(
-                                id=playthrough_id, error="Hours must be positive"
-                            )
-                        )
+                        failed_items.append(BulkFailedItem(id=playthrough_id, error="Hours must be positive"))
                         continue
-                    existing_playthrough.play_time_hours = (
-                        existing_playthrough.play_time_hours or 0
-                    ) + hours_val
+                    existing_playthrough.play_time_hours = (existing_playthrough.play_time_hours or 0) + hours_val
                     existing_playthrough.updated_at = now
                     self.db.commit()
                     self.db.refresh(existing_playthrough)

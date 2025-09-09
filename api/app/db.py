@@ -21,14 +21,10 @@ _engine = create_engine(
     engine_url,
     future=True,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False}
-    if engine_url.startswith("sqlite")
-    else {},
+    connect_args={"check_same_thread": False} if engine_url.startswith("sqlite") else {},
 )
 
-SessionLocal = sessionmaker(
-    bind=_engine, autoflush=False, autocommit=False, future=True
-)
+SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False, future=True)
 
 
 class Base(DeclarativeBase):

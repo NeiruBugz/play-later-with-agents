@@ -253,18 +253,14 @@ def test_list_playthroughs_basic(test_data):
 def test_list_playthroughs_with_status_filter(test_data):
     """Test filtering by playthrough status."""
     # Filter by COMPLETED status
-    response = client.get(
-        "/api/v1/playthroughs?status=COMPLETED", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?status=COMPLETED", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt1 is completed
     assert data["items"][0]["status"] == "COMPLETED"
 
     # Filter by PLAYING status
-    response = client.get(
-        "/api/v1/playthroughs?status=PLAYING", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?status=PLAYING", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt2 is playing
@@ -283,17 +279,13 @@ def test_list_playthroughs_with_status_filter(test_data):
 def test_list_playthroughs_with_platform_filter(test_data):
     """Test filtering by platform."""
     # Filter by PC platform
-    response = client.get(
-        "/api/v1/playthroughs?platform=PC", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?platform=PC", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 3  # pt1, pt4, pt5 are on PC
 
     # Filter by PS5 platform
-    response = client.get(
-        "/api/v1/playthroughs?platform=PS5", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?platform=PS5", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt2 is on PS5
@@ -311,17 +303,13 @@ def test_list_playthroughs_with_platform_filter(test_data):
 def test_list_playthroughs_with_rating_filter(test_data):
     """Test filtering by rating range."""
     # Filter by minimum rating
-    response = client.get(
-        "/api/v1/playthroughs?rating_min=8", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?rating_min=8", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt1 has rating 9
 
     # Filter by maximum rating
-    response = client.get(
-        "/api/v1/playthroughs?rating_max=9", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?rating_max=9", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt1 has rating
@@ -339,17 +327,13 @@ def test_list_playthroughs_with_rating_filter(test_data):
 def test_list_playthroughs_with_play_time_filter(test_data):
     """Test filtering by play time range."""
     # Filter by minimum play time
-    response = client.get(
-        "/api/v1/playthroughs?play_time_min=40", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?play_time_min=40", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # pt1 (120.5) and pt2 (45.0)
 
     # Filter by maximum play time
-    response = client.get(
-        "/api/v1/playthroughs?play_time_max=20", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?play_time_max=20", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # pt4 (5.0) and pt5 (15.0)
@@ -367,17 +351,13 @@ def test_list_playthroughs_with_play_time_filter(test_data):
 def test_list_playthroughs_with_difficulty_filter(test_data):
     """Test filtering by difficulty."""
     # Filter by Normal difficulty
-    response = client.get(
-        "/api/v1/playthroughs?difficulty=Normal", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?difficulty=Normal", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 3  # pt1, pt3, pt4
 
     # Filter by Hard difficulty
-    response = client.get(
-        "/api/v1/playthroughs?difficulty=Hard", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?difficulty=Hard", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt2
@@ -416,9 +396,7 @@ def test_list_playthroughs_with_playthrough_type_filter(test_data):
 def test_list_playthroughs_with_date_filters(test_data):
     """Test filtering by start and completion dates."""
     # Filter by started after
-    response = client.get(
-        "/api/v1/playthroughs?started_after=2023-02-01", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?started_after=2023-02-01", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # pt2, pt5 (pt3 has no started_at)
@@ -454,25 +432,19 @@ def test_list_playthroughs_with_date_filters(test_data):
 def test_list_playthroughs_with_search(test_data):
     """Test search functionality in game titles and notes."""
     # Search in game title
-    response = client.get(
-        "/api/v1/playthroughs?search=witcher", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?search=witcher", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 2  # pt1 and pt5 (both Witcher 3)
 
     # Search in notes
-    response = client.get(
-        "/api/v1/playthroughs?search=challenging", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?search=challenging", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt2
 
     # Search in both
-    response = client.get(
-        "/api/v1/playthroughs?search=bugs", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?search=bugs", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
     data = response.json()
     assert data["total_count"] == 1  # Only pt4
@@ -645,9 +617,7 @@ def test_list_playthroughs_filters_applied_in_response(test_data):
 def test_list_playthroughs_invalid_parameters(test_data):
     """Test validation of query parameters."""
     # Invalid sort_order
-    response = client.get(
-        "/api/v1/playthroughs?sort_order=invalid", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?sort_order=invalid", headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Invalid rating range (min > max)
@@ -658,9 +628,7 @@ def test_list_playthroughs_invalid_parameters(test_data):
     assert response.status_code == 422
 
     # Invalid limit (too high)
-    response = client.get(
-        "/api/v1/playthroughs?limit=1000", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs?limit=1000", headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Invalid date format
@@ -710,9 +678,7 @@ def test_create_playthrough_success(test_data):
         "notes": "Looking forward to playing this!",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 201
 
     data = response.json()
@@ -736,9 +702,7 @@ def test_create_playthrough_with_collection_item(test_data):
         "acquisition_type": "DIGITAL",
     }
 
-    collection_response = client.post(
-        "/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-1"}
-    )
+    collection_response = client.post("/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-1"})
     assert collection_response.status_code == 201
     collection_id = collection_response.json()["id"]
 
@@ -754,9 +718,7 @@ def test_create_playthrough_with_collection_item(test_data):
         "playthrough_type": "First Playthrough",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 201
 
     data = response.json()
@@ -782,9 +744,7 @@ def test_create_playthrough_completed_with_rating(test_data):
         "notes": "Amazing game, loved every minute!",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 201
 
     data = response.json()
@@ -802,9 +762,7 @@ def test_create_playthrough_invalid_game_id(test_data):
         "platform": "PC",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Game not found" in response.json()["message"]
 
@@ -818,9 +776,7 @@ def test_create_playthrough_invalid_collection_id(test_data):
         "platform": "PC",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
 
@@ -834,9 +790,7 @@ def test_create_playthrough_collection_ownership_validation(test_data):
         "acquisition_type": "PHYSICAL",
     }
 
-    collection_response = client.post(
-        "/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-2"}
-    )
+    collection_response = client.post("/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-2"})
     assert collection_response.status_code == 201
     collection_id = collection_response.json()["id"]
 
@@ -848,9 +802,7 @@ def test_create_playthrough_collection_ownership_validation(test_data):
         "platform": "Xbox",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Collection item not found" in response.json()["message"]
 
@@ -865,9 +817,7 @@ def test_create_playthrough_collection_game_mismatch(test_data):
         "platform": "PC",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
     assert "Collection item is for a different game" in response.json()["message"]
 
@@ -881,9 +831,7 @@ def test_create_playthrough_invalid_enum_values(test_data):
         "platform": "PC",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -897,9 +845,7 @@ def test_create_playthrough_validation_constraints(test_data):
         "rating": 15,  # Should be 1-10
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Test negative play time
@@ -910,9 +856,7 @@ def test_create_playthrough_validation_constraints(test_data):
         "play_time_hours": -5.0,
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -921,25 +865,19 @@ def test_create_playthrough_missing_required_fields(test_data):
     # Missing game_id
     playthrough_data = {"status": "PLANNING", "platform": "PC"}
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Missing status
     playthrough_data = {"game_id": "game-1", "platform": "PC"}
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Missing platform
     playthrough_data = {"game_id": "game-1", "status": "PLANNING"}
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -953,9 +891,7 @@ def test_create_playthrough_user_isolation(test_data):
         "notes": "User 1 playthrough",
     }
 
-    response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 201
     playthrough_id = response.json()["id"]
 
@@ -1088,9 +1024,7 @@ def test_get_playthrough_success_with_milestones(test_data):
 
 def test_get_playthrough_not_found(test_data):
     """Test getting non-existent playthrough."""
-    response = client.get(
-        "/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
@@ -1145,15 +1079,11 @@ def test_get_playthrough_invalid_id_format(test_data):
     # So we test with clearly invalid IDs instead
 
     # Test with special characters that shouldn't exist in IDs
-    response = client.get(
-        "/api/v1/playthroughs/invalid/id/with/slashes", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/invalid/id/with/slashes", headers={"X-User-Id": "user-1"})
     assert response.status_code == 404  # Should not match any route or should not exist
 
     # Test with just spaces (URL encoded)
-    response = client.get(
-        "/api/v1/playthroughs/%20%20%20", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/%20%20%20", headers={"X-User-Id": "user-1"})
     assert response.status_code == 404  # Should not be found
 
 
@@ -1222,9 +1152,7 @@ def test_update_playthrough_basic_fields(test_data):
         "play_time_hours": 25.5,
     }
 
-    response = client.put(
-        "/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1241,9 +1169,7 @@ def test_update_playthrough_valid_status_transitions(test_data):
     """Test valid status transitions with timestamp logic."""
     # PLANNING -> PLAYING (should set started_at)
     update_data = {"status": "PLAYING"}
-    response = client.put(
-        "/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-3", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1253,9 +1179,7 @@ def test_update_playthrough_valid_status_transitions(test_data):
 
     # PLAYING -> COMPLETED (should set completed_at)
     update_data = {"status": "COMPLETED", "rating": 8}
-    response = client.put(
-        "/api/v1/playthroughs/pt-2", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-2", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1266,9 +1190,7 @@ def test_update_playthrough_valid_status_transitions(test_data):
     # PLAYING -> ON_HOLD
     # Create a new playthrough first since pt-2 is now completed
     create_data = {"game_id": "game-4", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     new_playthrough_id = create_response.json()["id"]
 
@@ -1289,9 +1211,7 @@ def test_update_playthrough_playing_to_mastered(test_data):
     """Test PLAYING -> MASTERED transition (should set completed_at)."""
     # First create a playing playthrough
     create_data = {"game_id": "game-1", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     playthrough_id = create_response.json()["id"]
 
@@ -1321,9 +1241,7 @@ def test_update_playthrough_restart_scenarios(test_data):
     """Test restarting dropped playthroughs."""
     # DROPPED -> PLANNING (restart scenario)
     update_data = {"status": "PLANNING", "notes": "Decided to give it another try"}
-    response = client.put(
-        "/api/v1/playthroughs/pt-4", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-4", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1333,9 +1251,7 @@ def test_update_playthrough_restart_scenarios(test_data):
 
     # DROPPED -> PLAYING (direct restart)
     create_data = {"game_id": "game-2", "status": "DROPPED", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     dropped_id = create_response.json()["id"]
 
     update_data = {"status": "PLAYING", "notes": "Starting fresh"}
@@ -1355,9 +1271,7 @@ def test_update_playthrough_invalid_status_transitions(test_data):
     """Test invalid status transitions."""
     # COMPLETED -> PLAYING (invalid - can't uncomplete)
     update_data = {"status": "PLAYING"}
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
     assert "Invalid status transition" in response.json()["message"]
 
@@ -1369,9 +1283,7 @@ def test_update_playthrough_invalid_status_transitions(test_data):
         "platform": "PC",
         "completed_at": "2024-01-15T10:00:00",
     }
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     playthrough_id = create_response.json()["id"]
 
     # Update to mastered first
@@ -1396,23 +1308,17 @@ def test_update_playthrough_validation_constraints(test_data):
     """Test field validation constraints."""
     # Invalid rating
     update_data = {"rating": 15}  # Should be 1-10
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Negative play time
     update_data = {"play_time_hours": -5.0}
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
     # Invalid status enum
     update_data = {"status": "INVALID_STATUS"}
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -1433,16 +1339,12 @@ def test_update_playthrough_user_isolation(test_data):
     update_data = {"status": "PLAYING"}
 
     # Try to update user-1's playthrough as user-2
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-2"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-2"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
     # Try to update user-2's playthrough as user-1
-    response = client.put(
-        "/api/v1/playthroughs/pt-6", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-6", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
@@ -1457,9 +1359,7 @@ def test_update_playthrough_immutable_fields(test_data):
         "platform": "Updated Platform",  # Should be allowed
     }
 
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1477,9 +1377,7 @@ def test_update_playthrough_partial_updates(test_data):
     """Test that partial updates work correctly."""
     # Update only one field
     update_data = {"notes": "Updated notes only"}
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json=update_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1494,9 +1392,7 @@ def test_update_playthrough_timestamp_logic_detailed(test_data):
     """Test detailed timestamp logic for different scenarios."""
     # Create a planning playthrough
     create_data = {"game_id": "game-1", "status": "PLANNING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     playthrough_id = create_response.json()["id"]
 
     # Update to PLAYING - should set started_at
@@ -1540,9 +1436,7 @@ def test_update_playthrough_timestamp_logic_detailed(test_data):
 
 def test_update_playthrough_empty_body(test_data):
     """Test updating with empty body."""
-    response = client.put(
-        "/api/v1/playthroughs/pt-1", json={}, headers={"X-User-Id": "user-1"}
-    )
+    response = client.put("/api/v1/playthroughs/pt-1", json={}, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Should return the playthrough unchanged except for updated_at
@@ -1600,9 +1494,7 @@ def test_complete_playthrough_success_mastered(test_data):
     """Test successfully completing a playthrough with mastered completion type."""
     # Create a new playing playthrough first
     create_data = {"game_id": "game-3", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     playthrough_id = create_response.json()["id"]
 
@@ -1633,9 +1525,7 @@ def test_complete_playthrough_success_dropped(test_data):
     """Test successfully marking a playthrough as dropped."""
     # Create a new playing playthrough first
     create_data = {"game_id": "game-1", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     playthrough_id = create_response.json()["id"]
 
@@ -1665,9 +1555,7 @@ def test_complete_playthrough_success_on_hold(test_data):
     """Test successfully putting a playthrough on hold."""
     # Create a new playing playthrough first
     create_data = {"game_id": "game-2", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     playthrough_id = create_response.json()["id"]
 
@@ -1695,9 +1583,7 @@ def test_complete_playthrough_minimal_data(test_data):
     """Test completing playthrough with minimal required data."""
     # Create a new playing playthrough first
     create_data = {"game_id": "game-4", "status": "PLAYING", "platform": "PC"}
-    create_response = client.post(
-        "/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"}
-    )
+    create_response = client.post("/api/v1/playthroughs", json=create_data, headers={"X-User-Id": "user-1"})
     assert create_response.status_code == 201
     playthrough_id = create_response.json()["id"]
 
@@ -1842,9 +1728,7 @@ def test_delete_playthrough_success(test_data):
     assert response.status_code == 200
 
     # Delete the playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1858,9 +1742,7 @@ def test_delete_playthrough_success(test_data):
 
 def test_delete_playthrough_not_found(test_data):
     """Test deleting non-existent playthrough."""
-    response = client.delete(
-        "/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/non-existent", headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
@@ -1868,9 +1750,7 @@ def test_delete_playthrough_not_found(test_data):
 def test_delete_playthrough_user_isolation(test_data):
     """Test users cannot delete other users' playthroughs."""
     # Try to delete user-1's playthrough as user-2
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-2"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-2"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
@@ -1879,9 +1759,7 @@ def test_delete_playthrough_user_isolation(test_data):
     assert response.status_code == 200
 
     # User-2 can delete their own playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-2"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-6", headers={"X-User-Id": "user-2"})
     assert response.status_code == 200
 
     data = response.json()
@@ -1896,9 +1774,7 @@ def test_delete_playthrough_removes_from_list(test_data):
     initial_count = response.json()["total_count"]
 
     # Delete a playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Verify count is reduced by 1
@@ -1916,33 +1792,23 @@ def test_delete_playthrough_removes_from_list(test_data):
 def test_delete_playthrough_different_statuses(test_data):
     """Test deleting playthroughs in different statuses."""
     # Delete completed playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Delete playing playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-2", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Delete planning playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-3", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Delete dropped playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-4", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Delete on hold playthrough
-    response = client.delete(
-        "/api/v1/playthroughs/pt-5", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-5", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Verify all are gone
@@ -1954,24 +1820,18 @@ def test_delete_playthrough_different_statuses(test_data):
 def test_delete_playthrough_twice(test_data):
     """Test that deleting the same playthrough twice returns 404."""
     # First delete should succeed
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     # Second delete should return 404
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
     assert response.status_code == 404
     assert "Playthrough not found" in response.json()["message"]
 
 
 def test_delete_playthrough_response_format(test_data):
     """Test that delete response has correct format."""
-    response = client.delete(
-        "/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"}
-    )
+    response = client.delete("/api/v1/playthroughs/pt-1", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2010,9 +1870,7 @@ def test_bulk_update_status_success(test_data):
         "data": {"status": "PLAYING"},
     }
 
-    response1 = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data_1, headers={"X-User-Id": "user-1"}
-    )
+    response1 = client.post("/api/v1/playthroughs/bulk", json=bulk_data_1, headers={"X-User-Id": "user-1"})
     assert response1.status_code == 200
 
     # Now both pt-2 and pt-3 are PLAYING, so both can transition to ON_HOLD
@@ -2022,9 +1880,7 @@ def test_bulk_update_status_success(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response2 = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data_2, headers={"X-User-Id": "user-1"}
-    )
+    response2 = client.post("/api/v1/playthroughs/bulk", json=bulk_data_2, headers={"X-User-Id": "user-1"})
     assert response2.status_code == 200
 
     data = response2.json()
@@ -2051,9 +1907,7 @@ def test_bulk_update_platform_success(test_data):
         "data": {"platform": "Steam Deck"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2081,9 +1935,7 @@ def test_bulk_add_time_success(test_data):
         "data": {"hours": 5.5},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2111,9 +1963,7 @@ def test_bulk_delete_success(test_data):
 
     bulk_data = {"action": "delete", "playthrough_ids": ["pt-3", "pt-4"]}
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2140,9 +1990,7 @@ def test_bulk_partial_success_207(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 207
 
     data = response.json()
@@ -2173,9 +2021,7 @@ def test_bulk_user_isolation(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 207  # Partial success
 
     data = response.json()
@@ -2197,9 +2043,7 @@ def test_bulk_invalid_action(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -2211,9 +2055,7 @@ def test_bulk_invalid_status_transition(test_data):
         "data": {"status": "PLANNING"},  # Invalid transition from COMPLETED to PLANNING
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 207  # Partial success (all failed)
 
     data = response.json()
@@ -2232,9 +2074,7 @@ def test_bulk_empty_playthrough_ids(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422  # Pydantic validation error
 
 
@@ -2243,9 +2083,7 @@ def test_bulk_missing_required_fields(test_data):
     # Missing action
     bulk_data = {"playthrough_ids": ["pt-1"], "data": {"status": "ON_HOLD"}}
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422
 
 
@@ -2254,18 +2092,14 @@ def test_bulk_invalid_data_for_action(test_data):
     # Missing required data for update_status
     bulk_data = {"action": "update_status", "playthrough_ids": ["pt-1"], "data": {}}
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 400
     assert "status is required" in response.json()["message"].lower()
 
     # Missing required data for add_time
     bulk_data = {"action": "add_time", "playthrough_ids": ["pt-1"], "data": {}}
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 400
     assert "hours is required" in response.json()["message"].lower()
 
@@ -2279,9 +2113,7 @@ def test_bulk_add_time_with_none_initial_time(test_data):
         "data": {"hours": 10.5},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2298,9 +2130,7 @@ def test_bulk_response_format(test_data):
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2323,14 +2153,10 @@ def test_bulk_invalid_status_enum(test_data):
     bulk_data = {
         "action": "update_status",
         "playthrough_ids": ["pt-2"],
-        "data": {
-            "status": "INVALID_STATUS"
-        },  # Not a valid PlaythroughStatus enum value
+        "data": {"status": "INVALID_STATUS"},  # Not a valid PlaythroughStatus enum value
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 400
     error_message = response.json()["message"]
     assert "invalid status" in error_message.lower()
@@ -2349,9 +2175,7 @@ def test_bulk_oversized_playthrough_ids():
         "data": {"status": "ON_HOLD"},
     }
 
-    response = client.post(
-        "/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"}
-    )
+    response = client.post("/api/v1/playthroughs/bulk", json=bulk_data, headers={"X-User-Id": "user-1"})
     assert response.status_code == 422  # Validation error
     error_data = response.json()
     assert "invalid request data" in error_data["message"].lower()
@@ -2369,9 +2193,7 @@ def test_bulk_oversized_playthrough_ids():
 
 def test_get_backlog_success(test_data):
     """Test successful backlog retrieval."""
-    response = client.get(
-        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2391,17 +2213,13 @@ def test_get_backlog_success(test_data):
 
 def test_get_backlog_user_isolation(test_data):
     """Test backlog only shows user's own playthroughs."""
-    response = client.get(
-        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
     user1_backlog_count = data["total_count"]
 
-    response = client.get(
-        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-2"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-2"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2422,9 +2240,7 @@ def test_get_backlog_with_collection_info(test_data):
         "acquisition_type": "DIGITAL",
         "priority": 5,
     }
-    collection_response = client.post(
-        "/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-1"}
-    )
+    collection_response = client.post("/api/v1/collection", json=collection_data, headers={"X-User-Id": "user-1"})
     assert collection_response.status_code == 201
     collection_id = collection_response.json()["id"]
 
@@ -2434,14 +2250,10 @@ def test_get_backlog_with_collection_info(test_data):
         "status": "PLANNING",
         "platform": "PC",
     }
-    playthrough_response = client.post(
-        "/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"}
-    )
+    playthrough_response = client.post("/api/v1/playthroughs", json=playthrough_data, headers={"X-User-Id": "user-1"})
     assert playthrough_response.status_code == 201
 
-    response = client.get(
-        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2460,9 +2272,7 @@ def test_get_backlog_with_collection_info(test_data):
 
 def test_get_backlog_priority_filtering(test_data):
     """Test backlog can be filtered by priority."""
-    response = client.get(
-        "/api/v1/playthroughs/backlog?priority=5", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog?priority=5", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2481,9 +2291,7 @@ def test_get_backlog_requires_auth():
 def test_get_backlog_empty_result():
     """Test backlog endpoint when user has no planning playthroughs."""
     # Create a user with no planning playthroughs
-    response = client.get(
-        "/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-empty"}
-    )
+    response = client.get("/api/v1/playthroughs/backlog", headers={"X-User-Id": "user-empty"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2496,9 +2304,7 @@ def test_get_backlog_empty_result():
 
 def test_get_playing_success(test_data):
     """Test successful playing retrieval."""
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2519,17 +2325,13 @@ def test_get_playing_success(test_data):
 
 def test_get_playing_user_isolation(test_data):
     """Test playing only shows user's own playthroughs."""
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
     user1_playing_count = data["total_count"]
 
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-2"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-2"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2543,9 +2345,7 @@ def test_get_playing_user_isolation(test_data):
 
 def test_get_playing_platform_filtering(test_data):
     """Test playing can be filtered by platform."""
-    response = client.get(
-        "/api/v1/playthroughs/playing?platform=PC", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/playing?platform=PC", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2556,9 +2356,7 @@ def test_get_playing_platform_filtering(test_data):
 
 def test_get_playing_includes_play_time(test_data):
     """Test playing items include play_time_hours and last_played fields."""
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2579,9 +2377,7 @@ def test_get_playing_requires_auth():
 def test_get_playing_empty_result():
     """Test playing endpoint when user has no playing playthroughs."""
     # Create a user with no playing playthroughs
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-empty"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-empty"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2591,9 +2387,7 @@ def test_get_playing_empty_result():
 
 def test_get_playing_shows_recent_activity(test_data):
     """Test playing shows most recently started playthroughs first."""
-    response = client.get(
-        "/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/playing", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2611,9 +2405,7 @@ def test_get_playing_shows_recent_activity(test_data):
 
 def test_get_completed_success(test_data):
     """Test successful completed retrieval."""
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2635,17 +2427,13 @@ def test_get_completed_success(test_data):
 
 def test_get_completed_user_isolation(test_data):
     """Test completed only shows user's own playthroughs."""
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
     user1_completed_count = data["total_count"]
 
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-2"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-2"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2659,9 +2447,7 @@ def test_get_completed_user_isolation(test_data):
 
 def test_get_completed_year_filtering(test_data):
     """Test completed can be filtered by completion year."""
-    response = client.get(
-        "/api/v1/playthroughs/completed?year=2023", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed?year=2023", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2673,9 +2459,7 @@ def test_get_completed_year_filtering(test_data):
 
 def test_get_completed_rating_filtering(test_data):
     """Test completed can be filtered by minimum rating."""
-    response = client.get(
-        "/api/v1/playthroughs/completed?min_rating=8", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed?min_rating=8", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2687,9 +2471,7 @@ def test_get_completed_rating_filtering(test_data):
 
 def test_get_completed_platform_filtering(test_data):
     """Test completed can be filtered by platform."""
-    response = client.get(
-        "/api/v1/playthroughs/completed?platform=PC", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed?platform=PC", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2700,9 +2482,7 @@ def test_get_completed_platform_filtering(test_data):
 
 def test_get_completed_includes_expected_fields(test_data):
     """Test completed items include expected fields."""
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2720,9 +2500,7 @@ def test_get_completed_includes_expected_fields(test_data):
 
 def test_get_completed_completion_stats(test_data):
     """Test completed endpoint includes completion statistics."""
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2750,9 +2528,7 @@ def test_get_completed_requires_auth():
 def test_get_completed_empty_result():
     """Test completed endpoint when user has no completed playthroughs."""
     # Create a user with no completed playthroughs
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-empty"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-empty"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2763,9 +2539,7 @@ def test_get_completed_empty_result():
 
 def test_get_completed_shows_recent_completions_first(test_data):
     """Test completed shows most recently completed playthroughs first."""
-    response = client.get(
-        "/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"}
-    )
+    response = client.get("/api/v1/playthroughs/completed", headers={"X-User-Id": "user-1"})
     assert response.status_code == 200
 
     data = response.json()
@@ -2913,9 +2687,7 @@ def test_get_stats_requires_auth():
 def test_get_stats_empty_user():
     """Test stats endpoint when user has no playthroughs."""
     # Create a user with no playthroughs
-    response = client.get(
-        "/api/v1/playthroughs/stats", headers={"X-User-Id": "user-empty"}
-    )
+    response = client.get("/api/v1/playthroughs/stats", headers={"X-User-Id": "user-empty"})
     assert response.status_code == 200
 
     data = response.json()

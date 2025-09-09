@@ -14,12 +14,8 @@ from app.db import Base as _Base
 
 class Base(_Base):
     __abstract__ = True
-    id: Mapped[str] = mapped_column(
-        String, primary_key=True, default=lambda: uuid4().hex
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: uuid4().hex)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -66,9 +62,7 @@ class SessionRecord(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
-def create_session(
-    db: Session, *, user_id: str, refresh_token: Optional[str] = None
-) -> SessionRecord:
+def create_session(db: Session, *, user_id: str, refresh_token: Optional[str] = None) -> SessionRecord:
     """Create a new session record with hashed refresh token."""
     refresh_token_hash = _hash_token(refresh_token) if refresh_token else None
     rec = SessionRecord(user_id=user_id, refresh_token_hash=refresh_token_hash)

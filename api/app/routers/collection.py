@@ -35,18 +35,12 @@ logger = logging.getLogger("app.router.collection")
 def list_collection(
     # Filtering parameters
     platform: Optional[str] = Query(None, description="Filter by platform"),
-    acquisition_type: Optional[AcquisitionType] = Query(
-        None, description="Filter by acquisition type"
-    ),
-    priority: Optional[int] = Query(
-        None, ge=1, le=5, description="Filter by priority (1-5)"
-    ),
+    acquisition_type: Optional[AcquisitionType] = Query(None, description="Filter by acquisition type"),
+    priority: Optional[int] = Query(None, ge=1, le=5, description="Filter by priority (1-5)"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search in game title or notes"),
     # Sorting parameters
-    sort_by: CollectionSortBy = Query(
-        CollectionSortBy.UPDATED_AT, description="Sort field"
-    ),
+    sort_by: CollectionSortBy = Query(CollectionSortBy.UPDATED_AT, description="Sort field"),
     sort_order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
     # Pagination parameters
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
@@ -82,9 +76,7 @@ def get_collection_stats(
     return service.get_collection_stats(current_user=current_user)
 
 
-@router.post(
-    "", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED)
 def create_collection_item(
     item_data: CollectionItemCreate,
     current_user: CurrentUser = Depends(get_current_user),
@@ -92,9 +84,7 @@ def create_collection_item(
 ) -> CollectionItemExpanded:
     """Create a new collection item for the authenticated user."""
     try:
-        return service.create_collection_item(
-            current_user=current_user, item_data=item_data
-        )
+        return service.create_collection_item(current_user=current_user, item_data=item_data)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ConflictError as e:
@@ -109,9 +99,7 @@ def get_collection_item(
 ) -> CollectionItemExpanded:
     """Get a collection item by ID for the authenticated user."""
     try:
-        return service.get_collection_item(
-            current_user=current_user, collection_id=collection_id
-        )
+        return service.get_collection_item(current_user=current_user, collection_id=collection_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
@@ -164,9 +152,7 @@ def bulk_collection_operations(
 ) -> BulkCollectionResponse:
     """Perform bulk operations on multiple collection items."""
     try:
-        response = service.bulk_collection_operations(
-            current_user=current_user, request=request
-        )
+        response = service.bulk_collection_operations(current_user=current_user, request=request)
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     if not response.success:

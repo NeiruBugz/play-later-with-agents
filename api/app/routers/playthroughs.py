@@ -43,40 +43,18 @@ def list_playthroughs(
         None, alias="status", description="Filter by playthrough status"
     ),
     platform: Optional[list[str]] = Query(None, description="Filter by platforms"),
-    rating_min: Optional[int] = Query(
-        None, ge=1, le=10, description="Minimum rating (1-10)"
-    ),
-    rating_max: Optional[int] = Query(
-        None, ge=1, le=10, description="Maximum rating (1-10)"
-    ),
-    play_time_min: Optional[float] = Query(
-        None, ge=0, description="Minimum play time in hours"
-    ),
-    play_time_max: Optional[float] = Query(
-        None, ge=0, description="Maximum play time in hours"
-    ),
-    difficulty: Optional[list[str]] = Query(
-        None, description="Filter by difficulty settings"
-    ),
-    playthrough_type: Optional[list[str]] = Query(
-        None, description="Filter by playthrough type"
-    ),
-    started_after: Optional[date] = Query(
-        None, description="Started after date (YYYY-MM-DD)"
-    ),
-    started_before: Optional[date] = Query(
-        None, description="Started before date (YYYY-MM-DD)"
-    ),
-    completed_after: Optional[date] = Query(
-        None, description="Completed after date (YYYY-MM-DD)"
-    ),
-    completed_before: Optional[date] = Query(
-        None, description="Completed before date (YYYY-MM-DD)"
-    ),
+    rating_min: Optional[int] = Query(None, ge=1, le=10, description="Minimum rating (1-10)"),
+    rating_max: Optional[int] = Query(None, ge=1, le=10, description="Maximum rating (1-10)"),
+    play_time_min: Optional[float] = Query(None, ge=0, description="Minimum play time in hours"),
+    play_time_max: Optional[float] = Query(None, ge=0, description="Maximum play time in hours"),
+    difficulty: Optional[list[str]] = Query(None, description="Filter by difficulty settings"),
+    playthrough_type: Optional[list[str]] = Query(None, description="Filter by playthrough type"),
+    started_after: Optional[date] = Query(None, description="Started after date (YYYY-MM-DD)"),
+    started_before: Optional[date] = Query(None, description="Started before date (YYYY-MM-DD)"),
+    completed_after: Optional[date] = Query(None, description="Completed after date (YYYY-MM-DD)"),
+    completed_before: Optional[date] = Query(None, description="Completed before date (YYYY-MM-DD)"),
     search: Optional[str] = Query(None, description="Search in game titles and notes"),
-    sort_by: PlaythroughSortBy = Query(
-        PlaythroughSortBy.UPDATED_AT, description="Sort field"
-    ),
+    sort_by: PlaythroughSortBy = Query(PlaythroughSortBy.UPDATED_AT, description="Sort field"),
     sort_order: SortOrder = Query(SortOrder.DESC, description="Sort direction"),
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
@@ -108,18 +86,14 @@ def list_playthroughs(
         raise HTTPException(status_code=422, detail=str(e)) from e
 
 
-@router.post(
-    "", response_model=PlaythroughResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("", response_model=PlaythroughResponse, status_code=status.HTTP_201_CREATED)
 def create_playthrough(
     playthrough_data: PlaythroughCreate,
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughResponse:
     try:
-        return service.create_playthrough(
-            current_user=current_user, playthrough_data=playthrough_data
-        )
+        return service.create_playthrough(current_user=current_user, playthrough_data=playthrough_data)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ValidationError as e:
@@ -130,9 +104,7 @@ def create_playthrough(
 
 @router.get("/backlog", response_model=BacklogResponse)
 def get_backlog(
-    priority: Optional[int] = Query(
-        None, ge=1, le=5, description="Filter by collection priority"
-    ),
+    priority: Optional[int] = Query(None, ge=1, le=5, description="Filter by collection priority"),
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> BacklogResponse:
@@ -152,15 +124,11 @@ def get_playing(
 def get_completed(
     year: Optional[int] = Query(None, description="Filter by completion year"),
     platform: Optional[str] = Query(None, description="Filter by platform"),
-    min_rating: Optional[int] = Query(
-        None, ge=1, le=10, description="Filter by minimum rating"
-    ),
+    min_rating: Optional[int] = Query(None, ge=1, le=10, description="Filter by minimum rating"),
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> CompletedResponse:
-    return service.get_completed(
-        current_user=current_user, year=year, platform=platform, min_rating=min_rating
-    )
+    return service.get_completed(current_user=current_user, year=year, platform=platform, min_rating=min_rating)
 
 
 @router.get("/stats", response_model=PlaythroughStats)
@@ -178,9 +146,7 @@ def get_playthrough_by_id(
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughDetail:
     try:
-        return service.get_playthrough_by_id(
-            current_user=current_user, playthrough_id=playthrough_id
-        )
+        return service.get_playthrough_by_id(current_user=current_user, playthrough_id=playthrough_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
@@ -236,9 +202,7 @@ def delete_playthrough(
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughDeleteResponse:
     try:
-        return service.delete_playthrough(
-            current_user=current_user, playthrough_id=playthrough_id
-        )
+        return service.delete_playthrough(current_user=current_user, playthrough_id=playthrough_id)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except OperationError as e:
@@ -253,9 +217,7 @@ def bulk_playthrough_operations(
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughBulkResponse:
     try:
-        data = service.bulk_playthrough_operations(
-            current_user=current_user, bulk_request=bulk_request
-        )
+        data = service.bulk_playthrough_operations(current_user=current_user, bulk_request=bulk_request)
     except ValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except BadRequestError as e:

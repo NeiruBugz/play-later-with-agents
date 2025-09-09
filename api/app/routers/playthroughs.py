@@ -38,7 +38,7 @@ router = APIRouter(prefix="/playthroughs", tags=["playthroughs"])
 
 
 @router.get("", response_model=PlaythroughListResponse)
-async def list_playthroughs(
+def list_playthroughs(
     playthrough_status: Optional[list[PlaythroughStatus]] = Query(
         None, alias="status", description="Filter by playthrough status"
     ),
@@ -111,7 +111,7 @@ async def list_playthroughs(
 @router.post(
     "", response_model=PlaythroughResponse, status_code=status.HTTP_201_CREATED
 )
-async def create_playthrough(
+def create_playthrough(
     playthrough_data: PlaythroughCreate,
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
@@ -129,7 +129,7 @@ async def create_playthrough(
 
 
 @router.get("/backlog", response_model=BacklogResponse)
-async def get_backlog(
+def get_backlog(
     priority: Optional[int] = Query(
         None, ge=1, le=5, description="Filter by collection priority"
     ),
@@ -140,7 +140,7 @@ async def get_backlog(
 
 
 @router.get("/playing", response_model=PlayingResponse)
-async def get_playing(
+def get_playing(
     platform: Optional[str] = Query(None, description="Filter by platform"),
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
@@ -149,7 +149,7 @@ async def get_playing(
 
 
 @router.get("/completed", response_model=CompletedResponse)
-async def get_completed(
+def get_completed(
     year: Optional[int] = Query(None, description="Filter by completion year"),
     platform: Optional[str] = Query(None, description="Filter by platform"),
     min_rating: Optional[int] = Query(
@@ -164,7 +164,7 @@ async def get_completed(
 
 
 @router.get("/stats", response_model=PlaythroughStats)
-async def get_stats(
+def get_stats(
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
 ) -> PlaythroughStats:
@@ -172,7 +172,7 @@ async def get_stats(
 
 
 @router.get("/{playthrough_id}", response_model=PlaythroughDetail)
-async def get_playthrough_by_id(
+def get_playthrough_by_id(
     playthrough_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
@@ -186,7 +186,7 @@ async def get_playthrough_by_id(
 
 
 @router.put("/{playthrough_id}", response_model=PlaythroughResponse)
-async def update_playthrough(
+def update_playthrough(
     playthrough_id: str,
     update_data: PlaythroughUpdate,
     current_user: CurrentUser = Depends(get_current_user),
@@ -207,7 +207,7 @@ async def update_playthrough(
 
 
 @router.post("/{playthrough_id}/complete", response_model=PlaythroughResponse)
-async def complete_playthrough(
+def complete_playthrough(
     playthrough_id: str,
     completion_data: PlaythroughComplete,
     current_user: CurrentUser = Depends(get_current_user),
@@ -230,7 +230,7 @@ async def complete_playthrough(
 
 
 @router.delete("/{playthrough_id}", response_model=PlaythroughDeleteResponse)
-async def delete_playthrough(
+def delete_playthrough(
     playthrough_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     service: PlaythroughsService = Depends(get_playthroughs_service),
@@ -246,7 +246,7 @@ async def delete_playthrough(
 
 
 @router.post("/bulk", response_model=PlaythroughBulkResponse)
-async def bulk_playthrough_operations(
+def bulk_playthrough_operations(
     bulk_request: PlaythroughBulkRequest,
     response: Response,
     current_user: CurrentUser = Depends(get_current_user),

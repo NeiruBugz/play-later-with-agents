@@ -32,7 +32,7 @@ logger = logging.getLogger("app.router.collection")
 
 
 @router.get("", response_model=CollectionListResponse)
-async def list_collection(
+def list_collection(
     # Filtering parameters
     platform: Optional[str] = Query(None, description="Filter by platform"),
     acquisition_type: Optional[AcquisitionType] = Query(
@@ -74,7 +74,7 @@ async def list_collection(
 
 
 @router.get("/stats", response_model=CollectionStats)
-async def get_collection_stats(
+def get_collection_stats(
     current_user: CurrentUser = Depends(get_current_user),
     service: CollectionService = Depends(get_collection_service),
 ) -> CollectionStats:
@@ -85,7 +85,7 @@ async def get_collection_stats(
 @router.post(
     "", response_model=CollectionItemExpanded, status_code=status.HTTP_201_CREATED
 )
-async def create_collection_item(
+def create_collection_item(
     item_data: CollectionItemCreate,
     current_user: CurrentUser = Depends(get_current_user),
     service: CollectionService = Depends(get_collection_service),
@@ -102,7 +102,7 @@ async def create_collection_item(
 
 
 @router.get("/{collection_id}", response_model=CollectionItemExpanded)
-async def get_collection_item(
+def get_collection_item(
     collection_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     service: CollectionService = Depends(get_collection_service),
@@ -117,7 +117,7 @@ async def get_collection_item(
 
 
 @router.put("/{collection_id}", response_model=CollectionItemExpanded)
-async def update_collection_item(
+def update_collection_item(
     collection_id: str,
     update_data: CollectionItemUpdate,
     current_user: CurrentUser = Depends(get_current_user),
@@ -135,7 +135,7 @@ async def update_collection_item(
 
 
 @router.delete("/{collection_id}")
-async def delete_collection_item(
+def delete_collection_item(
     collection_id: str,
     hard_delete: bool = Query(False, description="Permanently delete the item"),
     current_user: CurrentUser = Depends(get_current_user),
@@ -157,7 +157,7 @@ async def delete_collection_item(
 
 
 @router.post("/bulk", response_model=BulkCollectionResponse)
-async def bulk_collection_operations(
+def bulk_collection_operations(
     request: BulkCollectionRequest,
     current_user: CurrentUser = Depends(get_current_user),
     service: CollectionService = Depends(get_collection_service),

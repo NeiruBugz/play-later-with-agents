@@ -114,13 +114,19 @@ class PlaythroughsService:
         if playthrough_type:
             filters.append(Playthrough.playthrough_type.in_(playthrough_type))
         if started_after:
-            filters.append(Playthrough.started_at >= datetime.combine(started_after, datetime.min.time()))
+            filters.append(Playthrough.started_at >= datetime.combine(started_after, datetime.min.time(), timezone.utc))
         if started_before:
-            filters.append(Playthrough.started_at <= datetime.combine(started_before, datetime.max.time()))
+            filters.append(
+                Playthrough.started_at <= datetime.combine(started_before, datetime.max.time(), timezone.utc)
+            )
         if completed_after:
-            filters.append(Playthrough.completed_at >= datetime.combine(completed_after, datetime.min.time()))
+            filters.append(
+                Playthrough.completed_at >= datetime.combine(completed_after, datetime.min.time(), timezone.utc)
+            )
         if completed_before:
-            filters.append(Playthrough.completed_at <= datetime.combine(completed_before, datetime.max.time()))
+            filters.append(
+                Playthrough.completed_at <= datetime.combine(completed_before, datetime.max.time(), timezone.utc)
+            )
         if search:
             search_term = f"%{search}%"
             filters.append(or_(Game.title.ilike(search_term), Playthrough.notes.ilike(search_term)))
@@ -481,7 +487,9 @@ class PlaythroughsService:
 
         completed_with_rating = [p for p in completed_playthroughs if p.rating is not None]
         if completed_with_rating:
-            avg_rating = sum(p.rating for p in completed_with_rating) / len(completed_with_rating)  # type: ignore[arg-type]
+            avg_rating = sum(p.rating for p in completed_with_rating) / len(
+                completed_with_rating
+            )  # type: ignore[arg-type]
             completion_stats["average_rating"] = round(avg_rating, 2)
 
         playthroughs_with_time = [p for p in playthroughs if p.play_time_hours is not None]

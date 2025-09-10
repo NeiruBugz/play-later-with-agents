@@ -42,7 +42,7 @@ from app.schemas import (
 )
 from app.services.errors import (
     NotFoundError,
-    ValidationError,
+    ServiceValidationError,
     ConflictError,
     OperationError,
     BadRequestError,
@@ -78,16 +78,16 @@ class PlaythroughsService:
         offset: int,
     ) -> PlaythroughListResponse:
         if rating_min is not None and rating_max is not None and rating_min > rating_max:
-            raise ValidationError("rating_min must be <= rating_max")
+            raise ServiceValidationError("rating_min must be <= rating_max")
 
         if play_time_min is not None and play_time_max is not None and play_time_min > play_time_max:
-            raise ValidationError("play_time_min must be <= play_time_max")
+            raise ServiceValidationError("play_time_min must be <= play_time_max")
 
         if started_after is not None and started_before is not None and started_after > started_before:
-            raise ValidationError("started_after must be <= started_before")
+            raise ServiceValidationError("started_after must be <= started_before")
 
         if completed_after is not None and completed_before is not None and completed_after > completed_before:
-            raise ValidationError("completed_after must be <= completed_before")
+            raise ServiceValidationError("completed_after must be <= completed_before")
 
         query = (
             select(Playthrough, Game, CollectionItem)
@@ -238,7 +238,7 @@ class PlaythroughsService:
             if not collection_item:
                 raise NotFoundError("Collection item not found")
             if collection_item.game_id != playthrough_data.game_id:
-                raise ValidationError("Collection item is for a different game")
+                raise ServiceValidationError("Collection item is for a different game")
 
         playthrough = Playthrough(
             id=str(uuid4()),
@@ -487,9 +487,7 @@ class PlaythroughsService:
 
         completed_with_rating = [p for p in completed_playthroughs if p.rating is not None]
         if completed_with_rating:
-            avg_rating = sum(p.rating for p in completed_with_rating) / len(
-                completed_with_rating
-            )  # type: ignore[arg-type]
+            avg_rating = sum(p.rating for p in completed_with_rating) / len(completed_with_rating)  # type: ignore[arg-type]
             completion_stats["average_rating"] = round(avg_rating, 2)
 
         playthroughs_with_time = [p for p in playthroughs if p.play_time_hours is not None]
@@ -615,7 +613,7 @@ class PlaythroughsService:
 
         if update_data.status and update_data.status.value != existing_playthrough.status:
             if not self._is_valid_status_transition(existing_playthrough.status, update_data.status.value):
-                raise ValidationError(
+                raise ServiceValidationError(
                     f"Invalid status transition from {existing_playthrough.status} " f"to {update_data.status.value}"
                 )
 
@@ -690,7 +688,7 @@ class PlaythroughsService:
 
         completion_status = completion_data.completion_type.value
         if not self._is_valid_status_transition(existing_playthrough.status, completion_status):
-            raise ValidationError(
+            raise ServiceValidationError(
                 f"Invalid status transition from {existing_playthrough.status} to {completion_status}"
             )
 
@@ -788,7 +786,7 @@ class PlaythroughsService:
         elif bulk_request.action == BulkAction.DELETE:
             pass
         else:
-            raise ValidationError("Invalid action")
+            raise ServiceValidationError("Invalid action")
 
         successful_items: list[BulkResultItem] = []
         failed_items: list[BulkFailedItem] = []

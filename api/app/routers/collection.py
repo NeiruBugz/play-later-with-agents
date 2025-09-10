@@ -22,7 +22,7 @@ from app.services.collection_service import CollectionService
 from app.services.errors import (
     NotFoundError,
     ConflictError,
-    ValidationError,
+    ServiceValidationError,
     BadRequestError,
 )
 
@@ -63,7 +63,7 @@ def list_collection(
             limit=limit,
             offset=offset,
         )
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
 

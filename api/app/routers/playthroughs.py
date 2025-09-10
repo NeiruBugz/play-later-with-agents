@@ -30,7 +30,7 @@ from app.services.errors import (
     ConflictError,
     NotFoundError,
     OperationError,
-    ValidationError,
+    ServiceValidationError,
 )
 from app.services.playthroughs_service import PlaythroughsService
 
@@ -82,7 +82,7 @@ def list_playthroughs(
             limit=limit,
             offset=offset,
         )
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
 
@@ -96,7 +96,7 @@ def create_playthrough(
         return service.create_playthrough(current_user=current_user, playthrough_data=playthrough_data)
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -166,7 +166,7 @@ def update_playthrough(
         )
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -189,7 +189,7 @@ def complete_playthrough(
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ConflictError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except OperationError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -218,7 +218,7 @@ def bulk_playthrough_operations(
 ) -> PlaythroughBulkResponse:
     try:
         data = service.bulk_playthrough_operations(current_user=current_user, bulk_request=bulk_request)
-    except ValidationError as e:
+    except ServiceValidationError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
     except BadRequestError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

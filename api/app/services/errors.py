@@ -13,7 +13,7 @@ class ConflictError(ServiceError):
     pass
 
 
-class ValidationError(ServiceError):
+class ServiceValidationError(ServiceError):
     pass
 
 

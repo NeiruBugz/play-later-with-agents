@@ -52,9 +52,7 @@ def upgrade() -> None:
         sa.Column("acquisition_type", sa.String(), nullable=False),
         sa.Column("acquired_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("priority", sa.Integer(), nullable=True),
-        sa.Column(
-            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
-        ),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("notes", sa.String(), nullable=True),
         sa.Column(
             "created_at",
@@ -68,9 +66,7 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             nullable=False,
         ),
-        sa.UniqueConstraint(
-            "user_id", "game_id", "platform", name="uq_user_game_platform"
-        ),
+        sa.UniqueConstraint("user_id", "game_id", "platform", name="uq_user_game_platform"),
     )
     op.create_index("ix_collection_user", "collection_items", ["user_id"])
     op.create_index("ix_collection_platform", "collection_items", ["platform"])
@@ -124,9 +120,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), primary_key=True),
         sa.Column("user_id", sa.String(), nullable=False),
         sa.Column("refresh_token_hash", sa.String(), nullable=True),
-        sa.Column(
-            "active", sa.Boolean(), nullable=False, server_default=sa.text("true")
-        ),
+        sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

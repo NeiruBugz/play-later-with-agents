@@ -55,78 +55,78 @@
 - Validate: openapi includes schemas; tests import and validate dataclasses.
 - Commit: `feat(api): add DTOs for games, collection, playthroughs`
 
-### Task 7 – ORM models + migration
+### [x] Task 7 – ORM models + migration
 - Progress: ORM models implemented and validated via tests; Alembic migration pending.
 - SQLAlchemy models and initial Alembic migration for games, collection, playthroughs.
 - Validate: migration runs in test setup; tables exist; simple CRUD tested.
 - Commit: `feat(api): add ORM models and initial migration`
 
-### Task 8 – GET /collection
+### [x] Task 8 – GET /collection
 - Implement list with filtering, sorting, pagination; auth enforced.
 - Validate: tests cover filters, pagination, unauthorized.
 - Commit: `feat(api): list user collection with filters`
 
-### Task 9 – POST /collection
+### [x] Task 9 – POST /collection
 - Create item with validation (unique user+game+platform).
 - Validate: 201 on create; 409 on duplicate; invalid data 422.
 - Commit: `feat(api): add collection create endpoint`
 
-### Task 10 – GET /collection/{id}
+### [x] Task 10 – GET /collection/{id}
 - Fetch by ID with embedded game and playthrough summary.
 - Validate: 200/404 cases.
 - Commit: `feat(api): add collection get by id`
 
-### Task 11 – PUT /collection/{id}
+### [x] Task 11 – PUT /collection/{id}
 - Update mutable fields only; enforce rules.
 - Validate: 200; 422 on invalid priority; immutable fields rejected.
 - Commit: `feat(api): update collection item`
 
-### Task 12 – DELETE /collection/{id}
+### [x] Task 12 – DELETE /collection/{id}
 - Soft delete by default; optional hard delete flag with safeguards.
 - Validate: 200; is_active=false on soft; 404 not owned.
 - Commit: `feat(api): delete collection item (soft/hard)`
 
-### Task 13 – POST /collection/bulk
+### [x] Task 13 – POST /collection/bulk
 - Implement supported actions with partial success (207) semantics.
 - Validate: mixed IDs return 207; all good returns 200.
 - Commit: `feat(api): bulk collection operations`
 
-### Task 14 – GET /collection/stats
+### [x] Task 14 – GET /collection/stats
 - Return counts by platform, acquisition, priority, value estimate.
 - Validate: deterministic aggregates in tests.
 - Commit: `feat(api): collection statistics endpoint`
 
-### Task 15 – GET /playthroughs
+### [x] Task 15 – GET /playthroughs
 - List with advanced filters (status, platform, rating, time, dates, search) and sorting.
 - Validate: key filter combinations and pagination.
 - Commit: `feat(api): list playthroughs with filters`
 
-### Task 16 – POST /playthroughs
+### [x] Task 16 – POST /playthroughs
 - Create with validation (exists, ownership, enums).
 - Validate: 201; 404 on invalid refs; 422 invalid payload.
 - Commit: `feat(api): create playthrough`
 
-### Task 17 – GET /playthroughs/{id}
+### [x] Task 17 – GET /playthroughs/{id}
 - Full detail with embedded game/collection and milestones.
 - Validate: 200/404.
 - Commit: `feat(api): get playthrough by id`
 
-### Task 18 – PUT /playthroughs/{id}
+### [x] Task 18 – PUT /playthroughs/{id}
 - Update with business rules and valid status transitions.
 - Validate: 422 on invalid transitions; 200 on valid; timestamps logic.
 - Commit: `feat(api): update playthrough with rules`
 
-### Task 19 – POST /playthroughs/{id}/complete
+### [x] Task 19 – POST /playthroughs/{id}/complete
 - Finalize with completion details and types.
 - Validate: 200; 409 if already completed; data persisted.
 - Commit: `feat(api): complete playthrough`
 
-### Task 20 – DELETE /playthroughs/{id}
+### [x] Task 20 – DELETE /playthroughs/{id}
 - Delete record.
 - Validate: 200/404.
 - Commit: `feat(api): delete playthrough`
 
-### Task 21 – POST /playthroughs/bulk
+### [x] Task 21 – POST /playthroughs/bulk
 - Implement bulk actions (status, platform, add_time, delete).
 - Validate: 200/207 and per-item outcomes.
 - Commit: `feat(api): bulk playthrough operations`
@@ -181,7 +181,7 @@
 - Validate: spot-check major sections.
 - Commit: `docs(api): sync examples with implementation`
 
-### Task 32 – Update AGENTS.md
+### Task 32 – Update AGENTS.md, CLAUDE.md and GEMINI.md
 - Document the test-first workflow, per-task checklist, and generation steps.
 - Validate: content reflects the final process.
 - Commit: `docs: update AGENTS.md with testing and contract flow`

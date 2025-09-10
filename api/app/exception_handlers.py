@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
-import typing as t
 import uuid
 
 from fastapi import HTTPException, Request
@@ -11,12 +10,13 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.models import ErrorDetail, ErrorResponse
+from app.utils import format_datetime
 
 logger = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
-    return dt.datetime.now(dt.timezone.utc).isoformat()
+    return format_datetime(dt.datetime.now(dt.timezone.utc))
 
 
 def _get_request_id(request: Request) -> str:
@@ -47,7 +47,7 @@ def _format_response(
     return resp
 
 
-async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:  # type: ignore[override]
+async def handle_http_exception(request: Request, exc: HTTPException) -> JSONResponse:  # type: ignore[override] # pylint: disable=line-too-long
     code = exc.status_code
     if code == 401:
         err = "authentication_required"
@@ -61,16 +61,12 @@ async def handle_http_exception(request: Request, exc: HTTPException) -> JSONRes
     return _format_response(request, status_code=code, error=err, message=message)
 
 
-async def handle_starlette_http_exception(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def handle_starlette_http_exception(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     # Delegate to the same handler logic
     return await handle_http_exception(request, exc)  # type: ignore[arg-type]
 
 
-async def handle_request_validation_error(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def handle_request_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
     details: list[ErrorDetail] = []
     for e in exc.errors():
         loc = e.get("loc", [])
@@ -103,7 +99,7 @@ def register_exception_handlers(app) -> None:
     app.add_exception_handler(RequestValidationError, handle_request_validation_error)
 
 
-async def request_id_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+async def request_id_middleware(request: Request, call_next):  # type: ignore[no-untyped-def] # pylint: disable=line-too-long
     # Attach a request id if not present
     if not getattr(request.state, "request_id", None):
         request.state.request_id = uuid.uuid4().hex

@@ -5,6 +5,15 @@ pre-commit:
       run: pnpm lint
     backend-format:
       run: source api/.venv/bin/activate && cd api && poetry run ruff format
+    backend-lint:
+      glob: "api/**/*.py"
+      run: |
+        source api/.venv/bin/activate && cd api
+        # Extract only the app/ directory files from staged files
+        staged_app_files=$(echo "{staged_files}" | tr ' ' '\n' | grep '^api/app/' | sed 's|^api/||' | tr '\n' ' ')
+        if [ -n "$staged_app_files" ]; then
+          poetry run pylint $staged_app_files
+        fi
     schema-generation:
       glob: "api/**/*.py"
       run: source api/.venv/bin/activate && cd api && python scripts/generate_schema.py && cd ../web && pnpm gen:api

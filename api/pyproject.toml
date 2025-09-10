@@ -12,6 +12,7 @@ uvicorn = "^0.22.0"
 pydantic-settings = "^2.0.0"
 sqlalchemy = "^2.0.0"
 psycopg2-binary = "^2.9.0"
+pyyaml = "^6.0.1"
 
 [tool.poetry.scripts]
 generate-schema = "scripts.generate_schema:main"
@@ -21,6 +22,35 @@ ruff = "^0.1.0"
 pytest = "^8.3.0"
 httpx = "^0.27.0"
 alembic = "^1.13.2"
+pylint = "^3.0.0"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint.per-file-ignores]
+"app/routers/**/*.py" = ["B008"]
+
+[tool.pylint.messages_control]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring", 
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-locals",
+    "duplicate-code",
+    "fixme",
+    "too-many-positional-arguments",
+    "no-member",
+    "not-callable",
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.basic]
+good-names = ["i", "j", "k", "ex", "Run", "_", "id", "db"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

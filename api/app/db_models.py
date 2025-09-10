@@ -13,7 +13,6 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     func,
-    Index,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,9 +30,7 @@ class Game(Base):
     igdb_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, index=True)
     hltb_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     steam_app_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -41,7 +38,7 @@ class Game(Base):
         nullable=False,
     )
 
-    __table_args__ = (Index("ix_games_title", "title"),)
+    # Rely on column-level index=True for title; avoid duplicate explicit Index
 
 
 class CollectionItem(Base):
@@ -49,18 +46,14 @@ class CollectionItem(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    game_id: Mapped[str] = mapped_column(
-        String, ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    game_id: Mapped[str] = mapped_column(String, ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
     platform: Mapped[str] = mapped_column(String, nullable=False, index=True)
     acquisition_type: Mapped[str] = mapped_column(String, nullable=False)
     acquired_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     priority: Mapped[Optional[int]] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(String)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -68,11 +61,7 @@ class CollectionItem(Base):
         nullable=False,
     )
 
-    __table_args__ = (
-        UniqueConstraint(
-            "user_id", "game_id", "platform", name="uq_user_game_platform"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "game_id", "platform", name="uq_user_game_platform"),)
 
 
 class Playthrough(Base):
@@ -80,9 +69,7 @@ class Playthrough(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     user_id: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    game_id: Mapped[str] = mapped_column(
-        String, ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    game_id: Mapped[str] = mapped_column(String, ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
     collection_id: Mapped[Optional[str]] = mapped_column(
         String, ForeignKey("collection_items.id", ondelete="SET NULL"), nullable=True
     )
@@ -95,9 +82,7 @@ class Playthrough(Base):
     difficulty: Mapped[Optional[str]] = mapped_column(String)
     rating: Mapped[Optional[int]] = mapped_column(Integer)
     notes: Mapped[Optional[str]] = mapped_column(String)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

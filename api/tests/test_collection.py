@@ -1,21 +1,22 @@
 from datetime import datetime, timezone
-from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from app.main import app
-from app.db import get_db, SessionLocal
+from app.db import SessionLocal, Base
 from app.db_models import Game, CollectionItem, Playthrough
 from app.schemas import AcquisitionType
 
 client = TestClient(app)
 
 # Ensure tables exist
-from app.db import Base
-
-Base.metadata.create_all(bind=SessionLocal.kw["bind"])
+session = SessionLocal()
+try:
+    engine = session.get_bind()
+    Base.metadata.create_all(bind=engine)
+finally:
+    session.close()
 
 
 @pytest.fixture
